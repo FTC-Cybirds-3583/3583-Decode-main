@@ -28,11 +28,14 @@ public class TeleOpMode extends OpMode
     @Override
 
     public void init() {
-        rightRear = hardwareMap.dcMotor.get("RightBackMotor");
-        leftRear = hardwareMap.dcMotor.get("LeftBackMotor");
-        rightFront = hardwareMap.dcMotor.get("RightFrontMotor");
-        leftFront = hardwareMap.dcMotor.get("LeftFrontMotor");
-
+        rightRear = hardwareMap.dcMotor.get("backright");
+        leftRear = hardwareMap.dcMotor.get("backleft");
+        rightFront = hardwareMap.dcMotor.get("frontright");
+        leftFront = hardwareMap.dcMotor.get("frontleft");
+        leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         speed = 0.5;
         r_bump_1=false;
         l_bump_1=false;
@@ -56,10 +59,10 @@ public class TeleOpMode extends OpMode
         FR   -   -   -
         FL   -   +   -
         */
-        rightRear.setPower(speed*(gamepad1.left_stick_x-gamepad1.left_stick_y-gamepad1.right_stick_x));
-        leftRear.setPower(speed*(gamepad1.left_stick_x+gamepad1.left_stick_y-gamepad1.right_stick_x));
-        rightFront.setPower(speed*(-gamepad1.left_stick_x-gamepad1.left_stick_y-gamepad1.right_stick_x));
-        leftFront.setPower(speed*(-gamepad1.left_stick_x+gamepad1.left_stick_y-gamepad1.right_stick_x));
+        rightRear.setPower(-speed*(gamepad1.left_stick_x-gamepad1.left_stick_y+gamepad1.right_stick_x));
+        leftRear.setPower(-speed*(gamepad1.left_stick_x+gamepad1.left_stick_y+gamepad1.right_stick_x));
+        rightFront.setPower(-speed*(-gamepad1.left_stick_x-gamepad1.left_stick_y+gamepad1.right_stick_x));
+        leftFront.setPower(-speed*(-gamepad1.left_stick_x+gamepad1.left_stick_y+gamepad1.right_stick_x));
     }
     public void drive(double speed) {
         /*TABLE OF INP
@@ -97,7 +100,6 @@ public class TeleOpMode extends OpMode
 
     public void do_p1_things() {
         p1_fine_speed_control();
-        speed = gamepad1.right_trigger;
         dual_joy_control();
     }
 
@@ -109,6 +111,8 @@ public class TeleOpMode extends OpMode
     public void loop() {
         do_p1_things();
         do_p2_things();
+        telemetry.addData("running?", true);
+        telemetry.update();
     }
 }
 
