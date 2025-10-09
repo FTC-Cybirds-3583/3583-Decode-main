@@ -23,8 +23,6 @@ public class TeleOpMode extends OpMode
     boolean r_bump_1 = false;
     boolean l_bump_1 = false;
 
-    String testString = "hi";
-
     @Override
 
     public void init() {
