@@ -15,6 +15,8 @@ public class TeleOpMode extends OpMode
     DcMotor leftRear;
     DcMotor rightFront;
     DcMotor leftFront;
+    DcMotor rightSlide;
+    DcMotor leftSlide;
 
     double speed;
 
@@ -30,10 +32,14 @@ public class TeleOpMode extends OpMode
         leftRear = hardwareMap.dcMotor.get("backleft");
         rightFront = hardwareMap.dcMotor.get("frontright");
         leftFront = hardwareMap.dcMotor.get("frontleft");
+        rightSlide = hardwareMap.dcMotor.get("rightslide");
+        leftSlide = hardwareMap.dcMotor.get("leftslide");
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         speed = 0.5;
         r_bump_1=false;
         l_bump_1=false;
@@ -95,10 +101,26 @@ public class TeleOpMode extends OpMode
         }
     }
 
+    public void slide_control() {
+        if (gamepad1.dpad_down) {
+            leftSlide.setPower(1);
+            rightSlide.setPower(-1);
+        }
+        if (gamepad1.dpad_up) {
+            leftSlide.setPower(-1);
+            rightSlide.setPower(1);
+        }
+        if (gamepad1.dpad_left) {
+            leftSlide.setPower(0);
+            rightSlide.setPower(0);
+        }
+    }
+
 
     public void do_p1_things() {
         p1_fine_speed_control();
         dual_joy_control();
+        slide_control();
     }
 
     public void do_p2_things() {
