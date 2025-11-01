@@ -14,6 +14,7 @@ import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.lang.reflect.Array;
 @TeleOp(name="Cybirds-Tele-1")
@@ -185,8 +186,10 @@ public class TeleOpMode extends OpMode
                 telemetry.addData("Botpose", botpose.toString());
                 telemetry.addData("result valid",true);
                 if (gamepad1.left_trigger > 0.2) {
+                    telemetry.addData("fid0", result.getFiducialResults().get(0).getTargetPoseCameraSpace());
                     float lx = 0;
                     float ly = 0;
+                    float rx = 0;
 
                     if (result.getTy() < 5) {
                         ly= -1;
@@ -196,7 +199,12 @@ public class TeleOpMode extends OpMode
                     } else if (result.getTx() < -2) {
                         lx = -1;
                     }
-                    dual_joy_control(lx,ly,0,0);
+                    if (result.getBotpose().getOrientation().getYaw() > 130) {
+                        rx = 1;
+                    } else if (result.getBotpose().getOrientation().getYaw() < 130) {
+                        rx = -1;
+                    }
+                    dual_joy_control(lx,ly,rx,0);
 
                     return true;
                 }
