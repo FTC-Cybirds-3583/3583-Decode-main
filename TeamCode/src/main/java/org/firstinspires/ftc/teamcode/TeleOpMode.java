@@ -64,11 +64,15 @@ public class TeleOpMode extends OpMode
         leftSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
+
 
         //initialise limelight on pipeline 0
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(0);
+        limelight.setPollRateHz(100000000);
         limelight.start();
+
+        limelight.pipelineSwitch(0);
         //set drive speed at 0.5 initially
         speed = 0.5;
         //initialise bumpers as "not pressed"
@@ -86,7 +90,7 @@ public class TeleOpMode extends OpMode
         return tot;
     }
 
-    public void dual_joy_control() {
+    public void dual_joy_control(float left_stick_x,float left_stick_y,float right_stick_x,float right_stick_y) {
         /*TABLE OF INP
              LX  LY  RX
         RR   +   -   -
@@ -96,10 +100,10 @@ public class TeleOpMode extends OpMode
         */
 
         //don't ask how this works, it is wonderful
-        rightRear.setPower(-speed*(gamepad1.left_stick_x-gamepad1.left_stick_y+gamepad1.right_stick_x));
-        leftRear.setPower(-speed*(gamepad1.left_stick_x+gamepad1.left_stick_y+gamepad1.right_stick_x));
-        rightFront.setPower(-speed*(-gamepad1.left_stick_x-gamepad1.left_stick_y+gamepad1.right_stick_x));
-        leftFront.setPower(-speed*(-gamepad1.left_stick_x+gamepad1.left_stick_y+gamepad1.right_stick_x));
+        rightRear.setPower(-speed*(left_stick_x-left_stick_y+right_stick_x));
+        leftRear.setPower(-speed*(left_stick_x+left_stick_y+right_stick_x));
+        rightFront.setPower(-speed*(-left_stick_x-left_stick_y+right_stick_x));
+        leftFront.setPower(-speed*(-left_stick_x+left_stick_y+right_stick_x));
     }
 
     public void p1_fine_speed_control() {
@@ -169,28 +173,50 @@ public class TeleOpMode extends OpMode
         }
     }
 
-    public void limelight_things() {
-        if (gamepad1.left_trigger > 0.2) {
-            return;
-        }
+    public boolean limelight_things() {
         LLResult result = limelight.getLatestResult();
+
+        telemetry.addData("result exists",result != null);
         if (result != null) {
             if (result.isValid()) {
                 Pose3D botpose = result.getBotpose();
                 telemetry.addData("tx", result.getTx());
                 telemetry.addData("ty", result.getTy());
                 telemetry.addData("Botpose", botpose.toString());
+                telemetry.addData("result valid",true);
+                if (gamepad1.left_trigger > 0.2) {
+                    float lx = 0;
+                    float ly = 0;
+
+                    if (result.getTy() < 5) {
+                        ly= -1;
+                    }
+                    if (result.getTx() > 2) {
+                        lx = 1;
+                    } else if (result.getTx() < -2) {
+                        lx = -1;
+                    }
+                    dual_joy_control(lx,ly,0,0);
+
+                    return true;
+                }
+            } else {
+
+                telemetry.addData("result valid",false);
             }
         }
+        return false;
     }
 
     public void do_p1_things() {
         p1_fine_speed_control();
-        dual_joy_control();
         slide_control();
         intake_control();
         intake_control();
-        limelight_things();
+
+        if (!limelight_things()) {
+            dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,gamepad1.right_stick_x,gamepad1.right_stick_y);
+        }
     }
 
     public void do_p2_things() {
@@ -201,11 +227,6 @@ public class TeleOpMode extends OpMode
     public void loop() {
         do_p1_things();
         do_p2_things();
-        telemetry.addData("> current slide target", slide_target_pos);
-        telemetry.addData("left slide position", leftSlide.getCurrentPosition());
-        telemetry.addData("right slide position", rightSlide.getCurrentPosition());
-        telemetry.addData("> left slide busy", leftSlide.isBusy());
-        telemetry.addData("> right slide busy", rightSlide.isBusy());
         telemetry.update();
     }
 }
