@@ -70,7 +70,7 @@ public class TeleOpMode extends OpMode
 
         //initialise limelight on pipeline 0
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.setPollRateHz(100000000);
+        limelight.setPollRateHz(100);
         limelight.start();
 
         limelight.pipelineSwitch(0);
@@ -219,7 +219,6 @@ public class TeleOpMode extends OpMode
     public void do_p1_things() {
         p1_fine_speed_control();
         slide_control();
-        intake_control();
         intake_control();
 
         if (!limelight_things()) {
