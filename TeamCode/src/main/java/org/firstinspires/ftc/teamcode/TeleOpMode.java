@@ -154,12 +154,14 @@ public class TeleOpMode extends OpMode
         if (leftSlide.isBusy() || slide_target_pos > 50) {
             leftSlide.setPower(1.0);
         } else {
-            leftSlide.setPower(0.1);
+            leftSlide.setPower(0);
         }
         if (rightSlide.isBusy() || slide_target_pos > 50) {
             rightSlide.setPower(1.0);
+            telemetry.addData("power is 0 on right slide", false);
         } else {
-            rightSlide.setPower(0.1);
+            rightSlide.setPower(0);
+            telemetry.addData("power is 0 on right slide", true);
         }
         leftSlide.setTargetPosition(slide_target_pos);
         rightSlide.setTargetPosition(slide_target_pos);
