@@ -15,9 +15,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import java.util.concurrent.TimeUnit;
 
-@Autonomous( name = "AutoLimeLight")
+@Autonomous( name = "AutoLimeLightBR")
 
-public class AutoLimeLight extends OpMode {
+public class AutoLimeLightBR extends OpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     DcMotor rightRear;
