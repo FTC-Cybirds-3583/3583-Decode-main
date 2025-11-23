@@ -72,6 +72,10 @@ public class TeleOpMode extends OpMode
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //set slides to target their current position
         slide_target_pos = -5;
@@ -144,10 +148,10 @@ public class TeleOpMode extends OpMode
         leftRear.setPower(s*(left_stick_x+left_stick_y-right_stick_x));
         rightFront.setPower(s*(-left_stick_x-left_stick_y-right_stick_x));
         leftFront.setPower(s*(-left_stick_x+left_stick_y-right_stick_x));
-        telemetry.addData("rightRear", s*(left_stick_x-left_stick_y-right_stick_x));
-        telemetry.addData("leftRear", s*(left_stick_x+left_stick_y-right_stick_x));
-        telemetry.addData("rightFront", s*(-left_stick_x-left_stick_y-right_stick_x));
-        telemetry.addData("leftFront", s*(-left_stick_x+left_stick_y-right_stick_x));
+        telemetry.addData("rightRear", rightRear.getPower());
+        telemetry.addData("leftRear", leftRear.getPower());
+        telemetry.addData("rightFront", rightFront.getPower());
+        telemetry.addData("leftFront", leftFront.getPower());
     }
 
     public void p1_fine_speed_control() {
@@ -348,6 +352,10 @@ public class TeleOpMode extends OpMode
         telemetry.addData("yaw",robot_yaw);
         telemetry.addData("pitch",robot_pitch);
         telemetry.addData("roll",robot_roll);
+        telemetry.addData("leftRearPos",leftRear.getCurrentPosition());
+        telemetry.addData("leftFrontPos",leftFront.getCurrentPosition());
+        telemetry.addData("rightFrontPos",rightFront.getCurrentPosition());
+        telemetry.addData("rightRearPos",rightRear.getCurrentPosition());
     }
 
     public void do_p2_things() {
