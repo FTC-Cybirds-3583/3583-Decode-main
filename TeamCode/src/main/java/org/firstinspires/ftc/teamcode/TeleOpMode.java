@@ -43,7 +43,7 @@ public class TeleOpMode extends Zkely
         slide_control();
         intake_control();
 
-        if (!limelight_target()) {
+        if (!limelight_target(gamepad1.left_stick_button, -45)) {
             power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,gamepad1.right_stick_x,gamepad1.right_stick_y,speed);
         }
     }
@@ -102,7 +102,7 @@ public class TeleOpMode extends Zkely
     }
     public void intake_control() {
         intake.setPower(-gamepad1.right_trigger);
-        outtake.setPower(-gamepad1.left_trigger);
+        outtake.setPower(-gamepad1.left_trigger*max_outtake_power);
     }
 
     public void do_p2_things() {
@@ -112,9 +112,6 @@ public class TeleOpMode extends Zkely
     @Override
     public void loop() {
         update_imu();
-        if (gamepad1.a) {
-            posDrive(1300,1000);
-        }
         do_p1_things();
         do_p2_things();
 

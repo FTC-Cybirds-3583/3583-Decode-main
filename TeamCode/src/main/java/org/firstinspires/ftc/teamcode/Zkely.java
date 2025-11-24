@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import static java.lang.Thread.sleep;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -31,11 +33,13 @@ public abstract class Zkely extends OpMode
     YawPitchRollAngles robotOrientation;
     Pose3D last_botpose;
     int last_tag;
-    int tolerance = 10;
-    int rfDir = -1;
-    int lfDir = -1;
-    int rbDir = 1;
-    int lbDir = -1;
+    int current_tag;
+    int tolerance = 3;
+    int rfDefDir = -1;
+    int lfDefDir = -1;
+    int rbDefDir = 1;
+    int lbDefDir = -1;
+    int posDriveWait= 2000;
 
     // Now use these simple methods to extract each angle
 // (Java type double) from the object you just created:
@@ -50,6 +54,10 @@ public abstract class Zkely extends OpMode
     double speed_fine_inc = 0.05;
     boolean r_bump_1 = false;
     boolean l_bump_1 = false;
+    int posDriveStraightSize = 1000; // js about perfect
+    int posDriveStrafeSize = 1075; // between 1060 and 1100
+    int posDriveTurnSize = 960; // js about perfect
+    float max_outtake_power = 0.5f;
 
     public void zkely_init() {
         rightRear = hardwareMap.get(DcMotorEx.class,"backright");
@@ -146,16 +154,56 @@ public abstract class Zkely extends OpMode
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        rightRear.setPower(rbDir*s*(left_stick_x-left_stick_y-right_stick_x));
-        leftRear.setPower(lbDir*s*(-left_stick_x-left_stick_y+right_stick_x));
-        rightFront.setPower(rfDir*s*(-left_stick_x-left_stick_y-right_stick_x));
-        leftFront.setPower(lfDir*s*(left_stick_x-left_stick_y+right_stick_x));
+        rightRear.setPower(rbDefDir*s*(left_stick_x-left_stick_y-right_stick_x));
+        leftRear.setPower(lbDefDir*s*(-left_stick_x-left_stick_y+right_stick_x));
+        rightFront.setPower(rfDefDir*s*(-left_stick_x-left_stick_y-right_stick_x));
+        leftFront.setPower(lfDefDir*s*(left_stick_x-left_stick_y+right_stick_x));
         telemetry.addData("rightRear", rightRear.getPower());
         telemetry.addData("leftRear", leftRear.getPower());
         telemetry.addData("rightFront", rightFront.getPower());
         telemetry.addData("leftFront", leftFront.getPower());
     }
-    public void posDrive(int position, int velocity) {
+    public void posStraight(float position, int velocity, int direction,boolean wait) {
+        posDrive(Math.round(position*posDriveStraightSize),velocity,direction,direction,direction,direction);
+        if (!wait) { return; }
+        try {
+            sleep(Math.round(position*posDriveWait));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void posStrafe(float position, int velocity, int direction, boolean wait) {
+        posDrive(Math.round(position*posDriveStrafeSize),velocity,-direction,direction,direction,-direction);
+        if (!wait) { return; }
+        try {
+            sleep(Math.round(position*posDriveWait));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void posTurn(float position, int velocity, int direction, boolean wait) {
+        posDrive(Math.round(position*posDriveTurnSize),velocity,-direction,direction,-direction,direction);
+        if (!wait) { return; }
+        try {
+            sleep(Math.round(position*posDriveWait));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void posJoystick(float position, int velocity, float left_stick_x,float left_stick_y, float right_stick_x,boolean wait) {
+        float rbDir = ((left_stick_x-left_stick_y-right_stick_x));
+        float lbDir = ((-left_stick_x-left_stick_y+right_stick_x));
+        float rfDir = ((-left_stick_x-left_stick_y-right_stick_x));
+        float lfDir = ((left_stick_x-left_stick_y+right_stick_x));
+        posDrive(Math.round(position*posDriveStraightSize),velocity,rfDir,lfDir,rbDir,lbDir);
+        if (!wait) { return; }
+        try {
+            sleep(Math.round(position*posDriveWait));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void posDrive(int position, int velocity,float rfDir, float lfDir, float rbDir, float lbDir) {
 
         rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -167,10 +215,10 @@ public abstract class Zkely extends OpMode
         rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        rightFront.setTargetPosition(position * rfDir);
-        leftFront.setTargetPosition(position * lfDir);
-        rightRear.setTargetPosition(position * rbDir);
-        leftRear.setTargetPosition(position * lbDir);
+        rightFront.setTargetPosition(Math.round(position * rfDir * rfDefDir));
+        leftFront.setTargetPosition(Math.round(position * lfDir * lfDefDir));
+        rightRear.setTargetPosition(Math.round(position * rbDir * rbDefDir));
+        leftRear.setTargetPosition(Math.round(position * lbDir * lbDefDir));
 
         rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -187,19 +235,31 @@ public abstract class Zkely extends OpMode
         rightRear.setVelocity(velocity);
         leftRear.setVelocity(velocity);
     }
-    public boolean limelight_target() {
+    public boolean limelight_read() {
         LLResult result = limelight.getLatestResult();
-
+        if (result != null) {
+            current_tag = result.getFiducialResults().get(0).getFiducialId();
+            return true;
+        }
+        return true;
+    }
+    public boolean limelight_target(boolean go,float starting_yaw) {
+        //STARTING YAW USES RACING AWAY FROM RED GOAL = 0, SO AUTOBR USES 180
+        rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        LLResult result = limelight.getLatestResult();
+        float lx = 0;
+        float ly = 0;
+        float rx = 0;
         telemetry.addData("result exists",result != null);
         if (result != null) {
-            float lx = 0;
-            float ly = 0;
-            float rx = 0;
             float target_ty = 18.5f;
             float target_tx = 2.1f;
-            float target_yaw = -135;
+            float target_yaw = -180 - starting_yaw;
             if (last_tag == 24) {
-                target_yaw = 135;
+                target_yaw = 180 - starting_yaw;
             }
             telemetry.addData("lastTag",last_tag);
             telemetry.addData("target_yaw",target_yaw);
@@ -215,7 +275,7 @@ public abstract class Zkely extends OpMode
                 telemetry.addData("Botpose", botpose.toString());
                 telemetry.addData("result valid",true);
                 telemetry.addData("fiducial",result.getFiducialResults().get(0).getFiducialId());
-                if (gamepad1.left_stick_button) {
+                if (go) {
                     telemetry.addData("fid0", result.getFiducialResults().get(0).getTargetPoseCameraSpace());
 
                     if (result.getTy() < target_ty-ty_var) {
@@ -256,7 +316,6 @@ public abstract class Zkely extends OpMode
 
                     power_dual_joy_control(lx,ly,rx,0,l_speed);
 
-                    return true;
                 }
                 last_botpose = botpose;
             } else {
@@ -289,10 +348,12 @@ public abstract class Zkely extends OpMode
                         rx = rx*0.2f;
                     }
                     power_dual_joy_control(lx,ly,rx,0,l_speed);
-                    return true;
                 }
                 telemetry.addData("result valid",false);
             }
+        }
+        if (lx != 0 || ly != 0 || rx != 0) {
+            return true;
         }
         return false;
     }
