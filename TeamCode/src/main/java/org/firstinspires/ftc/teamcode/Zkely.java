@@ -39,7 +39,7 @@ public abstract class Zkely extends OpMode
     int lfDefDir = -1;
     int rbDefDir = 1;
     int lbDefDir = -1;
-    int posDriveWait= 2000;
+    int posDriveWait= 1600;
 
     // Now use these simple methods to extract each angle
 // (Java type double) from the object you just created:
@@ -60,6 +60,8 @@ public abstract class Zkely extends OpMode
     float max_outtake_power = 0.5f;
 
     public void zkely_init() {
+        current_tag = 23;
+
         rightRear = hardwareMap.get(DcMotorEx.class,"backright");
         leftRear = hardwareMap.get(DcMotorEx.class,"backleft");
         rightFront = hardwareMap.get(DcMotorEx.class,"frontright");
@@ -163,42 +165,56 @@ public abstract class Zkely extends OpMode
         telemetry.addData("rightFront", rightFront.getPower());
         telemetry.addData("leftFront", leftFront.getPower());
     }
-    public void posStraight(float position, int velocity, int direction,boolean wait) {
+    public void posStraight(float position, int velocity, int direction,float wait) {
+        if (position < 0) {
+            position = Math.abs(position);
+            direction = direction * -1;
+        }
         posDrive(Math.round(position*posDriveStraightSize),velocity,direction,direction,direction,direction);
-        if (!wait) { return; }
         try {
-            sleep(Math.round(position*posDriveWait));
+            sleep(Math.round(position*wait*posDriveWait));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
-    public void posStrafe(float position, int velocity, int direction, boolean wait) {
+    public void posStrafe(float position, int velocity, int direction, float wait) {
+        if (position < 0) {
+            position = Math.abs(position);
+            direction = direction * -1;
+        }
         posDrive(Math.round(position*posDriveStrafeSize),velocity,-direction,direction,direction,-direction);
-        if (!wait) { return; }
         try {
-            sleep(Math.round(position*posDriveWait));
+            sleep(Math.round(position*wait*posDriveWait));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
-    public void posTurn(float position, int velocity, int direction, boolean wait) {
+    public void posTurn(float position, int velocity, int direction, float wait) {
+        if (position < 0) {
+            position = Math.abs(position);
+            direction = direction * -1;
+        }
         posDrive(Math.round(position*posDriveTurnSize),velocity,-direction,direction,-direction,direction);
-        if (!wait) { return; }
         try {
-            sleep(Math.round(position*posDriveWait));
+            sleep(Math.round(position*wait*posDriveWait));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
-    public void posJoystick(float position, int velocity, float left_stick_x,float left_stick_y, float right_stick_x,boolean wait) {
+    public void posJoystick(float position, int velocity, float left_stick_x,float left_stick_y, float right_stick_x,float wait) {
+        if (position < 0) {
+            position = Math.abs(position);
+            left_stick_x = left_stick_x * -1;
+            right_stick_x = right_stick_x * -1;
+            left_stick_y = left_stick_y * -1;
+        }
         float rbDir = ((left_stick_x-left_stick_y-right_stick_x));
         float lbDir = ((-left_stick_x-left_stick_y+right_stick_x));
         float rfDir = ((-left_stick_x-left_stick_y-right_stick_x));
         float lfDir = ((left_stick_x-left_stick_y+right_stick_x));
         posDrive(Math.round(position*posDriveStraightSize),velocity,rfDir,lfDir,rbDir,lbDir);
-        if (!wait) { return; }
         try {
-            sleep(Math.round(position*posDriveWait));
+            sleep(Math.round(position*wait*posDriveWait));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -238,10 +254,12 @@ public abstract class Zkely extends OpMode
     public boolean limelight_read() {
         LLResult result = limelight.getLatestResult();
         if (result != null) {
-            current_tag = result.getFiducialResults().get(0).getFiducialId();
-            return true;
+            if (!result.getFiducialResults().isEmpty()) {
+                current_tag = result.getFiducialResults().get(0).getFiducialId();
+                return true;
+            }
         }
-        return true;
+        return false;
     }
     public boolean limelight_target(boolean go,float starting_yaw) {
         //STARTING YAW USES RACING AWAY FROM RED GOAL = 0, SO AUTOBR USES 180
@@ -254,19 +272,19 @@ public abstract class Zkely extends OpMode
         float ly = 0;
         float rx = 0;
         telemetry.addData("result exists",result != null);
-        if (result != null) {
+        if (result != null && !result.getFiducialResults().isEmpty()) {
             float target_ty = 18.5f;
             float target_tx = 2.1f;
-            float target_yaw = -180 - starting_yaw;
+            float target_yaw = -(180 - starting_yaw);
             if (last_tag == 24) {
                 target_yaw = 180 - starting_yaw;
             }
             telemetry.addData("lastTag",last_tag);
             telemetry.addData("target_yaw",target_yaw);
-            double tx_var = 1;
-            double ty_var = 1;
-            double yaw_var = 2;
-            double l_speed = 0.5f;
+            double tx_var = 0.5;
+            double ty_var = 0.5;
+            double yaw_var = 1.2;
+            double l_speed = 0.5;
             if (result.isValid()) {
                 last_tag = result.getFiducialResults().get(0).getFiducialId();
                 Pose3D botpose = result.getBotpose();
@@ -355,6 +373,7 @@ public abstract class Zkely extends OpMode
         if (lx != 0 || ly != 0 || rx != 0) {
             return true;
         }
+        power_dual_joy_control(0,0,0,0,0);
         return false;
     }
     public float angle_distance(float angle_1,float angle_2) {

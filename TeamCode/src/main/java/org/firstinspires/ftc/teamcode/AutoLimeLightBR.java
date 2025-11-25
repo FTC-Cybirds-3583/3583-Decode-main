@@ -25,7 +25,7 @@ public class AutoLimeLightBR extends Zkely {
     @Override
     public void init() {
         zkely_init();
-        vel = 1200;
+        vel = 1500;
     }
     @Override
 
@@ -33,7 +33,7 @@ public class AutoLimeLightBR extends Zkely {
         //START INTAKE FACING GOAL
 
         //move 1 diagonal tile back
-        posStraight((float) Math.sqrt(2.0d), vel, -1, true);
+        posStraight((float) Math.sqrt(2.0d), vel, -1, 1); //
 
         //NEEDED:
         //move things through the body
@@ -41,9 +41,11 @@ public class AutoLimeLightBR extends Zkely {
         //shoot
         while (limelight_target(true,180)) {
             update_imu();
+            telemetry.update();
         }
         while (limelight_target(true,180)) {
             update_imu();
+            telemetry.update();
         }
         outtake.setPower(-max_outtake_power);
         try {
@@ -54,49 +56,56 @@ public class AutoLimeLightBR extends Zkely {
         outtake.setPower(0);
 
         //look at obelisk
-        posTurn(1,vel,-1,true);
+        posTurn(0.5f,vel,-1,1);
         while (!limelight_read()) {
             update_imu();
+            telemetry.addData("current_tag", current_tag);
+            telemetry.update();
         }
+        telemetry.addData("current_tag", current_tag);
+        telemetry.update();
 
 
         //NEEDED:
         //AprilTag code
 
         //turn towards the patterns, start intake
-        posTurn(1.5f,vel,-1,true);
+        posTurn(2,vel,-1,1);
         intake.setPower(-1);
 
         //NEEDED:
         //if tag is other than 23 (PPG), move straight for 1 (22/PGP) or 2 (21/GPP) tiles
-        posStraight(23-current_tag,vel,1,true);
+        posStraight((23-current_tag) - 0.325f,vel,1,1);
 
         //turn into pieces and intake them
-        posJoystick(1,vel,0,-1,-1,true);
-        posStraight(0.5f,vel,1,true);
+        posJoystick(1,vel,0,-1,-1,1);
+        posStraight(1,Math.round(vel*0.6f),1,1);
+        posStraight(0.5f,vel,-1,1);
         intake.setPower(0);
 
         //set up for scoring
         if (current_tag == 23) {
-            posTurn(0.5f, vel, -1, true);
-            posStrafe(1, vel, -1, true);
-            posStraight(0.5f, vel, -1, true);
+            posTurn(0.5f, vel, -1, 1);
+            posStrafe(1, vel, -1, 1);
+            posStraight(0.5f, vel, -1, 1);
         } else if (current_tag == 22) {
-            posTurn(0.5f, vel, -1, true);
-            posStrafe(1.5f, vel, -1, true);
+            posTurn(0.5f, vel, -1, 1);
+            posStrafe(1.5f, vel, -1, 1);
         } else if (current_tag == 21) {
             //NEED TO DO THIS WHEN BACK
             //DO NOT RUN AROUND THINGS WHICH SHOULDN'T BE HIT
-            posTurn(0.5f, vel, -1, true);
-            posStrafe(1, vel, -1, true);
-            posJoystick(1.5f,vel,-0.7f,-0.7f,0,true);
+            posTurn(0.5f, vel, -1, 1);
+            posStrafe(1, vel, -1, 1);
+            posJoystick(1.5f,vel,-0.7f,-0.7f,0,1);
         }
         //fine tune position
         while (limelight_target(true,180)) {
             update_imu();
+            telemetry.update();
         }
         while (limelight_target(true,180)) {
             update_imu();
+            telemetry.update();
         }
 
         //NEEDED:
@@ -108,32 +117,13 @@ public class AutoLimeLightBR extends Zkely {
             throw new RuntimeException(e);
         }
         outtake.setPower(0);
-
+        
+        posTurn(0.5f,vel,1,1);
+        posStrafe(1.5f,vel,1,1);
     }
     @Override
     public void loop() {
         update_imu();
-        if (gamepad1.dpad_up) {
-            posStraight(1,vel,1,true);
-        }
-        if (gamepad1.dpad_down) {
-            posStraight(1,vel,-1,true);
-        }
-        if (gamepad1.dpad_right) {
-            posStrafe(1,vel,1,true);
-        }
-        if (gamepad1.dpad_left) {
-            posStrafe(1,vel,-1,true);
-        }
-        if (gamepad1.left_bumper) {
-            posTurn(0.5f,vel,-1,true);
-        }
-        if (gamepad1.right_bumper) {
-            posTurn(0.5f,vel,1,true);
-        }
-        if (gamepad1.left_trigger > 0.2) {
-            posJoystick(1,vel, gamepad1.left_stick_x, gamepad1.left_stick_y,gamepad1.right_stick_x,true);
-        }
         telemetry.update();
     }
 
