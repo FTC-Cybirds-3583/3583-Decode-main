@@ -32,10 +32,21 @@ import java.lang.reflect.Array;
 @TeleOp(name="Zestacular Teleop")
 public class TeleOpMode extends Zkely
 {
+
+    boolean r_bump_1 = false;
+    boolean l_bump_1 = false;
+    boolean dpad_up_1 = false;
+    boolean dpad_down_1 = false;
+
     @Override
 
     public void init() {
         zkely_init();
+
+        r_bump_1 = false;
+        l_bump_1 = false;
+        dpad_up_1 = false;
+        dpad_down_1 = false;
     };
 
     public void do_p1_things() {
@@ -43,7 +54,7 @@ public class TeleOpMode extends Zkely
         slide_control();
         intake_control();
 
-        if (!limelight_target(gamepad1.left_stick_button, 45)) {
+        if (!limelight_target(gamepad1.left_stick_button, 180)) {
             power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,gamepad1.right_stick_x,gamepad1.right_stick_y,speed);
         }
     }
@@ -66,39 +77,14 @@ public class TeleOpMode extends Zkely
         }
     }
     public void slide_control() {
-        if (gamepad1.dpad_up) {
-            slide_target_pos = slide_up_pos;
+        if (gamepad1.dpad_up && !dpad_up_1) {
+            posSlide(slide_up_pos,500);
         }
-        if (gamepad1.dpad_down) {
-            slide_target_pos = slide_down_pos;
+        if (gamepad1.dpad_down && !dpad_down_1) {
+            posSlide(slide_down_pos,100);
         }
-        if (gamepad1.dpad_left) {
-            slide_target_pos = 0;
-
-            leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-            leftSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
-        if (leftSlide.isBusy() || slide_target_pos > 50) {
-            leftSlide.setPower(1.0);
-        } else {
-            leftSlide.setPower(0);
-        }
-        if (rightSlide.isBusy() || slide_target_pos > 50) {
-            rightSlide.setPower(1.0);
-            telemetry.addData("power is 0 on right slide", false);
-        } else {
-            rightSlide.setPower(0);
-            telemetry.addData("power is 0 on right slide", true);
-        }
-        if (leftSlide.getPower() > 0) {
-            leftSlide.setTargetPosition(slide_target_pos);
-        }
-        if (rightSlide.getPower() > 0) {
-            rightSlide.setTargetPosition(slide_target_pos);
-        }
+        dpad_up_1 = gamepad1.dpad_up;
+        dpad_down_1 = gamepad1.dpad_down;
     }
     public void intake_control() {
         intake.setPower(-gamepad1.right_trigger);

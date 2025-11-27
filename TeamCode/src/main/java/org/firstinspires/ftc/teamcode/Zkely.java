@@ -24,8 +24,8 @@ public abstract class Zkely extends OpMode
     DcMotorEx leftRear;
     DcMotorEx rightFront;
     DcMotorEx leftFront;
-    DcMotor rightSlide;
-    DcMotor leftSlide;
+    DcMotorEx rightSlide;
+    DcMotorEx leftSlide;
     DcMotor intake;
     DcMotor outtake;
     IMU.Parameters myIMUparameters;
@@ -52,8 +52,6 @@ public abstract class Zkely extends OpMode
     int slide_target_pos = 100;
     double speed;
     double speed_fine_inc = 0.05;
-    boolean r_bump_1 = false;
-    boolean l_bump_1 = false;
     int posDriveStraightSize = 1000; // js about perfect
     int posDriveStrafeSize = 1075; // between 1060 and 1100
     int posDriveTurnSize = 960; // js about perfect
@@ -67,8 +65,8 @@ public abstract class Zkely extends OpMode
         rightFront = hardwareMap.get(DcMotorEx.class,"frontright");
         leftFront = hardwareMap.get(DcMotorEx.class,"frontleft");
 
-        rightSlide = hardwareMap.dcMotor.get("rightslide");
-        leftSlide = hardwareMap.dcMotor.get("leftslide");
+        rightSlide = hardwareMap.get(DcMotorEx.class, "rightslide");
+        leftSlide = hardwareMap.get(DcMotorEx.class, "leftslide");
         intake = hardwareMap.dcMotor.get("intake");
         outtake = hardwareMap.dcMotor.get("outtake");
         imu = hardwareMap.get(IMU.class, "imu");
@@ -104,7 +102,7 @@ public abstract class Zkely extends OpMode
         rightRear.setTargetPositionTolerance(4);
 
         //set slides to target their current position
-        slide_target_pos = -20;
+        slide_target_pos = 0;
         //initialise slide encoder doodads :3
         leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -112,12 +110,14 @@ public abstract class Zkely extends OpMode
         rightSlide.setDirection(DcMotorSimple.Direction.FORWARD);
         leftSlide.setTargetPosition(slide_target_pos);
         rightSlide.setTargetPosition(slide_target_pos);
-        leftSlide.setPower(1.0);
-        rightSlide.setPower(1.0);
+        leftSlide.setVelocity(0);
+        rightSlide.setVelocity(0);
         leftSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        posSlide(slide_down_pos,800);
 
         rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -131,8 +131,6 @@ public abstract class Zkely extends OpMode
         //set drive speed at 0.5 initially
         speed = 0.5;
         //initialise bumpers as "not pressed"
-        r_bump_1=false;
-        l_bump_1=false;
 
         myIMUparameters = new IMU.Parameters(
                 new RevHubOrientationOnRobot(
@@ -251,6 +249,22 @@ public abstract class Zkely extends OpMode
         rightRear.setVelocity(velocity);
         leftRear.setVelocity(velocity);
     }
+    public void posSlide(int position, int velocity) {
+        rightSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        rightSlide.setTargetPosition(position);
+        leftSlide.setTargetPosition(position);
+
+        rightSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        rightSlide.setTargetPositionTolerance(tolerance);
+        leftSlide.setTargetPositionTolerance(tolerance);
+
+        rightSlide.setVelocity(velocity);
+        leftSlide.setVelocity(velocity);
+    }
     public boolean limelight_read() {
         LLResult result = limelight.getLatestResult();
         if (result != null) {
@@ -275,10 +289,7 @@ public abstract class Zkely extends OpMode
         if (result != null && !result.getFiducialResults().isEmpty()) {
             float target_ty = 18.5f;
             float target_tx = 2.1f;
-            float target_yaw = -(180 - starting_yaw);
-            if (last_tag == 24) {
-                target_yaw = 180 - starting_yaw;
-            }
+            float target_yaw = (180 - starting_yaw);
             telemetry.addData("lastTag",last_tag);
             telemetry.addData("target_yaw",target_yaw);
             double tx_var = 0.5;

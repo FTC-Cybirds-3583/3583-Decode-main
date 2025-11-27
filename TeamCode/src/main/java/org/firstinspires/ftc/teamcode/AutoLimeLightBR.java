@@ -56,7 +56,7 @@ public class AutoLimeLightBR extends Zkely {
         outtake.setPower(0);
 
         //look at obelisk
-        posTurn(0.5f,vel,-1,1);
+        posTurn(0.75f,vel,-1,1);
         while (!limelight_read()) {
             update_imu();
             telemetry.addData("current_tag", current_tag);
@@ -70,7 +70,7 @@ public class AutoLimeLightBR extends Zkely {
         //AprilTag code
 
         //turn towards the patterns, start intake
-        posTurn(2,vel,-1,1);
+        posTurn(1.75f,vel,-1,1);
         intake.setPower(-1);
 
         //NEEDED:
