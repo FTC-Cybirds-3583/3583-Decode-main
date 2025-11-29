@@ -6,10 +6,12 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -27,10 +29,11 @@ public abstract class Zkely extends OpMode
     DcMotorEx rightSlide;
     DcMotorEx leftSlide;
     DcMotor intake;
-    DcMotor outtake;
+    DcMotorEx outtake;
     IMU.Parameters myIMUparameters;
     IMU imu;
     YawPitchRollAngles robotOrientation;
+    CRServo midtake;
     Pose3D last_botpose;
     int last_tag;
     int current_tag;
@@ -68,8 +71,10 @@ public abstract class Zkely extends OpMode
         rightSlide = hardwareMap.get(DcMotorEx.class, "rightslide");
         leftSlide = hardwareMap.get(DcMotorEx.class, "leftslide");
         intake = hardwareMap.dcMotor.get("intake");
-        outtake = hardwareMap.dcMotor.get("outtake");
+        outtake = hardwareMap.get(DcMotorEx.class, "outtake");
         imu = hardwareMap.get(IMU.class, "imu");
+
+        midtake = hardwareMap.crservo.get("midtake");
 
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -264,6 +269,17 @@ public abstract class Zkely extends OpMode
 
         rightSlide.setVelocity(velocity);
         leftSlide.setVelocity(velocity);
+    }
+    public void posOuttake(int position, int velocity) {
+        outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        outtake.setTargetPosition(position);
+
+        outtake.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        outtake.setTargetPositionTolerance(tolerance);
+
+        outtake.setVelocity(velocity);
     }
     public boolean limelight_read() {
         LLResult result = limelight.getLatestResult();

@@ -101,7 +101,9 @@ public class TeleOpMode extends Zkely
         do_p1_things();
         do_p2_things();
 
-
+        if (gamepad1.dpad_left) {
+            midtake.setPower(1);
+        }
 
     }
 }
