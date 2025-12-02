@@ -97,12 +97,22 @@ public class TeleOpMode extends Zkely
 
     @Override
     public void loop() {
+        telemetry.addData("midpos",midtake.getPosition());
         update_imu();
         do_p1_things();
         do_p2_things();
 
-        if (gamepad1.dpad_left) {
-            midtake.setPower(1);
+        if (gamepad1.a) {
+            midtake.setPosition(midtake_up_pos);
+        }
+        if (gamepad1.b) {
+            midtake.setPosition(midtake_down_pos);
+        }
+        if (gamepad1.x) {
+            innertake.setPosition(innertake_up_pos);
+        }
+        if (gamepad1.y) {
+            innertake.setPosition(innertake_down_pos);
         }
 
     }

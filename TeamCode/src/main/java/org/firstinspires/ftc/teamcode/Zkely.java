@@ -33,7 +33,12 @@ public abstract class Zkely extends OpMode
     IMU.Parameters myIMUparameters;
     IMU imu;
     YawPitchRollAngles robotOrientation;
-    CRServo midtake;
+    Servo midtake;
+    Servo innertake;
+    double midtake_up_pos = 0;
+    double midtake_down_pos = 0.06;
+    double innertake_up_pos = 0;
+    double innertake_down_pos = 0.5;
     Pose3D last_botpose;
     int last_tag;
     int current_tag;
@@ -58,7 +63,7 @@ public abstract class Zkely extends OpMode
     int posDriveStraightSize = 1000; // js about perfect
     int posDriveStrafeSize = 1075; // between 1060 and 1100
     int posDriveTurnSize = 960; // js about perfect
-    float max_outtake_power = 0.5f;
+    float max_outtake_power = 0.7f;
 
     public void zkely_init() {
         current_tag = 23;
@@ -74,7 +79,9 @@ public abstract class Zkely extends OpMode
         outtake = hardwareMap.get(DcMotorEx.class, "outtake");
         imu = hardwareMap.get(IMU.class, "imu");
 
-        midtake = hardwareMap.crservo.get("midtake");
+        midtake = hardwareMap.servo.get("midtake");
+        innertake = hardwareMap.servo.get("innertake");
+        midtake.setPosition(midtake_down_pos);
 
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

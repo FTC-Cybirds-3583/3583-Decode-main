@@ -30,6 +30,7 @@ public class AutoLimeLightBR extends Zkely {
     @Override
 
     public void start() {
+        intake.setPower(-1);
         //START INTAKE FACING GOAL
 
         //move 1 diagonal tile back
@@ -71,8 +72,6 @@ public class AutoLimeLightBR extends Zkely {
 
         //turn towards the patterns, start intake
         posTurn(1.75f,vel,-1,1);
-        intake.setPower(-1);
-
         //NEEDED:
         //if tag is other than 23 (PPG), move straight for 1 (22/PGP) or 2 (21/GPP) tiles
         posStraight((23-current_tag) - 0.325f,vel,1,1);
@@ -81,8 +80,6 @@ public class AutoLimeLightBR extends Zkely {
         posJoystick(1,vel,0,-1,-1,1);
         posStraight(1,Math.round(vel*0.6f),1,1);
         posStraight(0.5f,vel,-1,1);
-        intake.setPower(0);
-
         //set up for scoring
         if (current_tag == 23) {
             posTurn(0.5f, vel, -1, 1);
