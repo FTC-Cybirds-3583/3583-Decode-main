@@ -175,6 +175,7 @@ public abstract class Zkely extends OpMode
         telemetry.addData("rightFront", rightFront.getPower());
         telemetry.addData("leftFront", leftFront.getPower());
     }
+
     public void posStraight(float position, int velocity, int direction,float wait) {
         if (position < 0) {
             position = Math.abs(position);
