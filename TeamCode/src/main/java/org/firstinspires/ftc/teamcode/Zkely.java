@@ -33,7 +33,7 @@ public abstract class Zkely extends OpMode
     IMU.Parameters myIMUparameters;
     IMU imu;
     YawPitchRollAngles robotOrientation;
-    Servo midtake;
+    CRServo midtake;
     Servo innertake;
     double midtake_up_pos = 0;
     double midtake_down_pos = 0.06;
@@ -79,9 +79,8 @@ public abstract class Zkely extends OpMode
         outtake = hardwareMap.get(DcMotorEx.class, "outtake");
         imu = hardwareMap.get(IMU.class, "imu");
 
-        midtake = hardwareMap.servo.get("midtake");
+        midtake = hardwareMap.crservo.get("midtake");
         innertake = hardwareMap.servo.get("innertake");
-        midtake.setPosition(midtake_down_pos);
 
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -170,10 +169,6 @@ public abstract class Zkely extends OpMode
         leftRear.setPower(lbDefDir*s*(-left_stick_x-left_stick_y+right_stick_x));
         rightFront.setPower(rfDefDir*s*(-left_stick_x-left_stick_y-right_stick_x));
         leftFront.setPower(lfDefDir*s*(left_stick_x-left_stick_y+right_stick_x));
-        telemetry.addData("rightRear", rightRear.getPower());
-        telemetry.addData("leftRear", leftRear.getPower());
-        telemetry.addData("rightFront", rightFront.getPower());
-        telemetry.addData("leftFront", leftFront.getPower());
     }
 
     public void posStraight(float position, int velocity, int direction,float wait) {
@@ -212,6 +207,7 @@ public abstract class Zkely extends OpMode
             throw new RuntimeException(e);
         }
     }
+
     public void posJoystick(float position, int velocity, float left_stick_x,float left_stick_y, float right_stick_x,float wait) {
         if (position < 0) {
             position = Math.abs(position);
@@ -230,6 +226,7 @@ public abstract class Zkely extends OpMode
             throw new RuntimeException(e);
         }
     }
+
     public void posDrive(int position, int velocity,float rfDir, float lfDir, float rbDir, float lbDir) {
 
         rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -289,6 +286,7 @@ public abstract class Zkely extends OpMode
 
         outtake.setVelocity(velocity);
     }
+
     public boolean limelight_read() {
         LLResult result = limelight.getLatestResult();
         if (result != null) {
@@ -299,6 +297,7 @@ public abstract class Zkely extends OpMode
         }
         return false;
     }
+
     public boolean limelight_target(boolean go,float starting_yaw) {
         //STARTING YAW USES RACING AWAY FROM RED GOAL = 0, SO AUTOBR USES 180
         rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -421,18 +420,12 @@ public abstract class Zkely extends OpMode
     public float map(float min_out, float max_out,float min_in,float max_in,float val_in) {
         return min_out + ((max_out-min_out) / (max_in - min_in)) * (val_in - min_in);
     }
+
     public void update_imu() {
         robotOrientation = imu.getRobotYawPitchRollAngles();
         robot_yaw = robotOrientation.getYaw(AngleUnit.DEGREES);
         robot_pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         robot_roll = robotOrientation.getRoll(AngleUnit.DEGREES);
-        telemetry.addData("yaw",robot_yaw);
-        telemetry.addData("pitch",robot_pitch);
-        telemetry.addData("roll",robot_roll);
-        telemetry.addData("leftRearPos",leftRear.getCurrentPosition());
-        telemetry.addData("leftFrontPos",leftFront.getCurrentPosition());
-        telemetry.addData("rightFrontPos",rightFront.getCurrentPosition());
-        telemetry.addData("rightRearPos",rightRear.getCurrentPosition());
     }
 
 }
