@@ -103,10 +103,13 @@ public class TeleOpMode extends Zkely
 
         if (gamepad1.b) {
             midtake.setPower(1);
+            midtake_2.setPower(1);
         } else if (gamepad1.a) {
             midtake.setPower(-1);
+            midtake_2.setPower(-1);
         } else {
             midtake.setPower(0);
+            midtake_2.setPower(0);
         }
         if (gamepad1.x) {
             innertake.setPosition(innertake_up_pos);

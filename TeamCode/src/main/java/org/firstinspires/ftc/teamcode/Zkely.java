@@ -34,6 +34,7 @@ public abstract class Zkely extends OpMode
     IMU imu;
     YawPitchRollAngles robotOrientation;
     CRServo midtake;
+    CRServo midtake_2;
     Servo innertake;
     double midtake_up_pos = 0;
     double midtake_down_pos = 0.06;
@@ -80,6 +81,7 @@ public abstract class Zkely extends OpMode
         imu = hardwareMap.get(IMU.class, "imu");
 
         midtake = hardwareMap.crservo.get("midtake");
+        midtake_2 = hardwareMap.crservo.get("midtake_2");
         innertake = hardwareMap.servo.get("innertake");
 
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
