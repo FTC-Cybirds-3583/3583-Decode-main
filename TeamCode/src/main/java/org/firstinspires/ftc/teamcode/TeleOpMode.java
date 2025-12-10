@@ -59,21 +59,11 @@ public class TeleOpMode extends Zkely
         }
     }
     public void p1_fine_speed_control() {
-        if (gamepad1.right_bumper) {
-            if (!r_bump_1) {
-                speed+=speed_fine_inc;
-            }
-            r_bump_1=true;
-        } else {
-            r_bump_1 = false;
-        }
         if (gamepad1.left_bumper) {
-            if (!l_bump_1) {
-                speed-=speed_fine_inc;
-            }
-            l_bump_1=true;
-        } else {
-            l_bump_1 = false;
+            max_outtake_power = close_max_outtake_power;
+        }
+        if (gamepad1.right_bumper) {
+            max_outtake_power = far_max_outtake_power;
         }
     }
     public void slide_control() {
@@ -88,7 +78,13 @@ public class TeleOpMode extends Zkely
     }
     public void intake_control() {
         intake.setPower(-gamepad1.right_trigger);
+        if (gamepad1.right_trigger > 0.2) {
+            midtake.setPower(1);
+        }
         outtake.setPower(-gamepad1.left_trigger*max_outtake_power);
+
+        telemetry.addData("starting yaw", robot_starting_yaw);
+        telemetry.addData("team",team);
     }
 
     public void do_p2_things() {

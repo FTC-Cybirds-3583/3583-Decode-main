@@ -64,9 +64,16 @@ public abstract class Zkely extends OpMode
     int posDriveStraightSize = 1000; // js about perfect
     int posDriveStrafeSize = 1075; // between 1060 and 1100
     int posDriveTurnSize = 960; // js about perfect
-    float max_outtake_power = 0.7f;
+    float close_max_outtake_power = 0.7f;
+    float far_max_outtake_power = 0.85f;
+    float max_outtake_power = close_max_outtake_power;
+    static float robot_starting_yaw = 180;
+    static String team = "N";
 
+    float true_yaw = 0;
     public void zkely_init() {
+        max_outtake_power = close_max_outtake_power;
+
         current_tag = 23;
 
         rightRear = hardwareMap.get(DcMotorEx.class,"backright");
@@ -83,6 +90,8 @@ public abstract class Zkely extends OpMode
         midtake = hardwareMap.crservo.get("midtake");
         midtake_2 = hardwareMap.crservo.get("midtake_2");
         innertake = hardwareMap.servo.get("innertake");
+
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -142,7 +151,7 @@ public abstract class Zkely extends OpMode
 
         limelight.pipelineSwitch(0);
         //set drive speed at 0.5 initially
-        speed = 0.5;
+        speed = 0.8;
         //initialise bumpers as "not pressed"
 
         myIMUparameters = new IMU.Parameters(
@@ -310,24 +319,27 @@ public abstract class Zkely extends OpMode
         float lx = 0;
         float ly = 0;
         float rx = 0;
-        telemetry.addData("result exists",result != null);
         if (result != null && !result.getFiducialResults().isEmpty()) {
-            float target_ty = 18.5f;
-            float target_tx = 2.1f;
-            float target_yaw = (180 - starting_yaw);
-            telemetry.addData("lastTag",last_tag);
+            float target_ty = 12f;
+            float target_tx = 4f;
+            float target_yaw = 130;
+            if (team == "R") {
+                target_yaw = 130;
+            } else if (team == "B") {
+                target_yaw = -130;
+            }
             telemetry.addData("target_yaw",target_yaw);
             double tx_var = 0.5;
             double ty_var = 0.5;
-            double yaw_var = 1.2;
+            double yaw_var = 1.5;
             double l_speed = 0.5;
             if (result.isValid()) {
                 last_tag = result.getFiducialResults().get(0).getFiducialId();
                 Pose3D botpose = result.getBotpose();
-                telemetry.addData("tx", result.getTx());
-                telemetry.addData("ty", result.getTy());
                 telemetry.addData("Botpose", botpose.toString());
-                telemetry.addData("result valid",true);
+
+                true_yaw = (float) botpose.getOrientation().getYaw();
+
                 telemetry.addData("fiducial",result.getFiducialResults().get(0).getFiducialId());
                 if (go) {
                     telemetry.addData("fid0", result.getFiducialResults().get(0).getTargetPoseCameraSpace());
@@ -350,23 +362,19 @@ public abstract class Zkely extends OpMode
                         lx = lx*0.2f;
                     }
 
-                    if (target_yaw > 0) {
-                        if (robot_yaw < target_yaw-yaw_var) {
+                    if (Math.abs(angle_distance((float) true_yaw,target_yaw))> yaw_var) {
+                        if (angle_distance(true_yaw,target_yaw) > 0) {
                             rx = -1;
-                        } else if (robot_yaw > target_yaw+yaw_var) {
+                        } else {
                             rx = 1;
                         }
                     } else {
-                        if (robot_yaw < -target_yaw-yaw_var) {
-                            rx = -1;
-                        }
-                        if (robot_yaw > (-target_yaw + yaw_var)) {
-                            rx = 1;
-                        }
+                        rx = 0;
                     }
-                    if (angle_distance((float) robot_yaw,target_yaw) < 45) {
+                    if (angle_distance((float) true_yaw,target_yaw) < 50) {
                         rx = rx*0.2f;
                     }
+                    telemetry.addData("angle distance",angle_distance(true_yaw,target_yaw));
 
                     power_dual_joy_control(lx,ly,rx,0,l_speed);
 
@@ -375,31 +383,25 @@ public abstract class Zkely extends OpMode
             } else {
                 if (last_botpose != null && gamepad1.left_stick_button) {
                     l_speed = 0.75d;
-                    if (target_yaw > 0) {
-                        if (robot_yaw < target_yaw-yaw_var) {
+                    if (Math.abs(angle_distance((float) true_yaw,target_yaw) )> yaw_var) {
+                        if (angle_distance(true_yaw,target_yaw) > 0) {
                             rx = -1;
-                        } else if (robot_yaw > target_yaw+yaw_var) {
+                        } else {
                             rx = 1;
                         }
                     } else {
-                        if (robot_yaw < -target_yaw-yaw_var) {
-                            rx = -1;
-                        }
-                        if (robot_yaw > (-target_yaw + yaw_var)) {
-                            rx = 1;
-                        }
+                        rx = 0;
                     }
 
+                    if (angle_distance((float) true_yaw,target_yaw) < 50) {
+                        rx = rx*0.2f;
+                    }
                     if (rx == 0) {
                         if (last_botpose.getPosition().x < -0.7) {
                             lx = 1;
                         } else if (last_botpose.getPosition().x > -0.3) {
                             lx = -1;
                         }
-                    }
-
-                    if (angle_distance((float) robot_yaw,target_yaw) < 45) {
-                        rx = rx*0.2f;
                     }
                     power_dual_joy_control(lx,ly,rx,0,l_speed);
                 }
@@ -412,12 +414,8 @@ public abstract class Zkely extends OpMode
         power_dual_joy_control(0,0,0,0,0);
         return false;
     }
-    public float angle_distance(float angle_1,float angle_2) {
-        angle_1 = (angle_1 % 360 + 360) % 360;
-        angle_2 = (angle_2 % 360 + 360) % 360;
-        float dist = Math.abs(angle_1 - angle_2);
-
-        return Math.min(dist,360-dist);
+    public float angle_distance(float angle,float target) {
+        return (target - angle + 180) % 360 - 180;
     }
     public float map(float min_out, float max_out,float min_in,float max_in,float val_in) {
         return min_out + ((max_out-min_out) / (max_in - min_in)) * (val_in - min_in);
@@ -428,6 +426,21 @@ public abstract class Zkely extends OpMode
         robot_yaw = robotOrientation.getYaw(AngleUnit.DEGREES);
         robot_pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         robot_roll = robotOrientation.getRoll(AngleUnit.DEGREES);
+        true_yaw = (float) (robot_yaw + robot_starting_yaw);
+        LLResult result = limelight.getLatestResult();
+        if (result != null && !result.getFiducialResults().isEmpty()) {
+            if (result.isValid()) {
+                Pose3D botpose = result.getBotpose();
+                true_yaw = (float) botpose.getOrientation().getYaw();
+            }
+        }
+        if (true_yaw > 180) {
+            true_yaw = true_yaw - 360;
+        }
+        if (true_yaw < -180) {
+            true_yaw = true_yaw + 360;
+        }
+        telemetry.addData("true yaw", true_yaw);
     }
 
 }
