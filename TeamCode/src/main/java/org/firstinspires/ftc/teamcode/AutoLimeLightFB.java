@@ -5,9 +5,9 @@ import static java.lang.Thread.sleep;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous( name = "Auto-Red-FAR")
+@Autonomous( name = "Auto-Blue-FAR")
 
-public class AutoLimeLightFR extends Zkely {
+public class AutoLimeLightFB extends Zkely {
     private ElapsedTime runtime = new ElapsedTime();
     int vel;
     @Override
@@ -18,16 +18,16 @@ public class AutoLimeLightFR extends Zkely {
     @Override
 
     public void start() {
-        robot_starting_yaw = 180;
+        robot_starting_yaw = -180;
         team = "B";
 
         outtake.setPower(outtake_dir * far_max_outtake_power);
         //aim
         posStraight(0.3f,vel,1,1);
-        posTurn((float) 1 /3,vel,1,1.1f);
+        posTurn((float) 1 /3,vel,-1,1.1f);
 
         //double check aiming
-        while (yaw_target(152)) {
+        while (yaw_target(-152)) {
             update_imu();
             telemetry.update();
         }
@@ -56,10 +56,10 @@ public class AutoLimeLightFR extends Zkely {
         }
 
         //move out of zone
-        posTurn((float) 1 /3,vel,-1,1.1f);
+        posTurn((float) 1 /3,vel,1,1.1f);
         posStraight(0.3f,vel,-1,1);
-        posStrafe(1.15f,vel,1,1);
-        posTurn(1,vel,1,1);
+        posStrafe(1.15f,vel,-1,1);
+        posTurn(1,vel,-1,1);
     }
     @Override
     public void loop() {

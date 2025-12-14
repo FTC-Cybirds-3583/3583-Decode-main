@@ -54,9 +54,12 @@ public class TeleOpMode extends Zkely
         slide_control();
         intake_control();
 
-        if (!limelight_target(gamepad1.left_stick_button, 180)) {
-            power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,gamepad1.right_stick_x,gamepad1.right_stick_y,speed);
+        if (!limelight_target(gamepad1.left_stick_button, true)) {
+            if (!limelight_target(gamepad1.right_stick_button,false)) {
+                power_dual_joy_control(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_stick_y, speed);
+            }
         }
+
     }
     public void p1_fine_speed_control() {
         if (gamepad1.left_bumper) {
@@ -77,11 +80,11 @@ public class TeleOpMode extends Zkely
         dpad_down_1 = gamepad1.dpad_down;
     }
     public void intake_control() {
-        intake.setPower(-gamepad1.right_trigger);
+        intake.setPower(intake_dir * gamepad1.right_trigger);
         if (gamepad1.right_trigger > 0.2) {
-            midtake.setPower(1);
+            midtake.setPower(midtake_dir * 1);
         }
-        outtake.setPower(-gamepad1.left_trigger*max_outtake_power);
+        outtake.setPower(outtake_dir * gamepad1.left_trigger*max_outtake_power);
 
         telemetry.addData("starting yaw", robot_starting_yaw);
         telemetry.addData("team",team);
@@ -114,6 +117,12 @@ public class TeleOpMode extends Zkely
             innertake.setPosition(innertake_down_pos);
         }
         innertake.setPosition(innertake.getPosition());
+        if (gamepad1.start) {
+            team = "R";
+        }
+        if (gamepad1.back) {
+            team = "B";
+        }
 
     }
 }
