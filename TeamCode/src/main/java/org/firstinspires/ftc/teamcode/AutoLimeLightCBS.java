@@ -5,9 +5,9 @@ import static java.lang.Thread.sleep;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous( name = "Auto-Blue-CLOSE")
+@Autonomous( name = "Blue-Shoot-CLOSE")
 
-public class AutoLimeLightCB extends Zkely {
+public class AutoLimeLightCBS extends Zkely {
     private ElapsedTime runtime = new ElapsedTime();
     int vel;
     @Override
