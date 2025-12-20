@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -37,7 +38,7 @@ public abstract class Zkely extends OpMode
     CRServo midtake_2;
     Servo innertake;
     double midtake_up_pos = 0;
-    float midtake_power = 0.8f;
+    float midtake_power = 0.5f;
     double midtake_down_pos = 0.06;
     double innertake_up_pos = 0;
     double innertake_down_pos = 0.5;
@@ -52,7 +53,7 @@ public abstract class Zkely extends OpMode
     int lfDefDir = -1;
     int rbDefDir = 1;
     int lbDefDir = -1;
-    int posDriveWait= 1600;
+    int posDriveWait= 1300;
 
     // Now use these simple methods to extract each angle
 // (Java type double) from the object you just created:
@@ -68,10 +69,13 @@ public abstract class Zkely extends OpMode
     int posDriveStraightSize = 1000; // js about perfect
     int posDriveStrafeSize = 1075; // between 1060 and 1100
     int posDriveTurnSize = 960; // js about perfect
-    float close_max_outtake_power = 0.675f;
+    float close_max_outtake_power = 0.67f;
     float far_max_outtake_power = 0.84f;
     float max_outtake_power = close_max_outtake_power;
     static float robot_starting_yaw = 180;
+
+    VoltageSensor voltageSensor;
+    double currentVoltage;
     static String team = "N";
 
     float true_yaw = 0;
@@ -96,6 +100,8 @@ public abstract class Zkely extends OpMode
         innertake = hardwareMap.servo.get("innertake");
 
         innertake.setPosition(innertake_down_pos);
+
+        voltageSensor = hardwareMap.get(VoltageSensor.class, "Control Hub");
 
         outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -157,7 +163,7 @@ public abstract class Zkely extends OpMode
 
         limelight.pipelineSwitch(0);
         //set drive speed at 0.5 initially
-        speed = 0.9;
+        speed = 1;
         //initialise bumpers as "not pressed"
 
         myIMUparameters = new IMU.Parameters(
@@ -187,33 +193,62 @@ public abstract class Zkely extends OpMode
         rightFront.setPower(rfDefDir*s*(-left_stick_x-left_stick_y-right_stick_x));
         leftFront.setPower(lfDefDir*s*(left_stick_x-left_stick_y+right_stick_x));
     }
-
-    public void startShooting(float power) throws InterruptedException {
+    public void shootAuto(boolean close) {
+        float power = close_max_outtake_power;
+        if (!close) {
+            power = far_max_outtake_power;
+        }
+        if (currentVoltage > 12.8) {
+            power *= 0.95;
+        }
+        if (currentVoltage < 12.35) {
+            power *= 1.015;
+        }
+        startShooting(power);
+        sleepMS(5000);
+    }
+    public void startShooting(float power) {
         innertake.setPosition(innertake_down_pos);
         midtake.setPower(midtake_dir * -1);
-        sleep(300);
+        sleepMS(300);
         intake.setPower(intake_dir * 1);
         midtake.setPower(midtake_dir * midtake_power);
         midtake_2.setPower(midtake_dir * midtake_power);
         outtake.setPower(outtake_dir * power);
     }
-    public void stopShooting() throws InterruptedException {
+    public void stopShooting() {
         intake.setPower(0);
         midtake.setPower(0);
         midtake_2.setPower(0);
         outtake.setPower(0);
     }
-    public void startIntake() throws InterruptedException {
+    public void startIntake() {
         innertake.setPosition(innertake_up_pos);
-        sleep(300);
+        sleepMS(300);
         intake.setPower(intake_dir * 1);
         midtake.setPower(midtake_dir);
     }
-    public void stopIntake() throws InterruptedException {
+    public void stopIntake() {
         innertake.setPosition(innertake_down_pos);
-        sleep(300);
+        sleepMS(300);
         intake.setPower(0);
         midtake.setPower(0);
+    }
+    public void sleepMS(int ms) {
+        try {
+            sleep(ms);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public boolean motorBelowTolerance(DcMotorEx motor,int tolerance) {
+        return Math.abs(motor.getCurrentPosition() - motor.getTargetPosition()) < tolerance;
+    }
+    public boolean any_drive_motor_busy() {
+        int tolerance = 10;
+        //return rightRear.isBusy() || rightFront.isBusy() || leftRear.isBusy() || leftFront.isBusy();
+        boolean bool = motorBelowTolerance(rightRear,tolerance) && motorBelowTolerance(leftRear,tolerance) && motorBelowTolerance(leftFront,tolerance) && motorBelowTolerance(rightFront,tolerance);
+        return !bool;
     }
     public void posStraight(float position, int velocity, int direction,float wait) {
         if (position < 0) {
@@ -221,11 +256,7 @@ public abstract class Zkely extends OpMode
             direction = direction * -1;
         }
         posDrive(Math.round(position*posDriveStraightSize),velocity,direction,direction,direction,direction);
-        try {
-            sleep(Math.round(position*wait*posDriveWait));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
     }
     public void posStrafe(float position, int velocity, int direction, float wait) {
         if (position < 0) {
@@ -233,11 +264,7 @@ public abstract class Zkely extends OpMode
             direction = direction * -1;
         }
         posDrive(Math.round(position*posDriveStrafeSize),velocity,-direction,direction,direction,-direction);
-        try {
-            sleep(Math.round(position*wait*posDriveWait));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
     }
     public void posTurn(float position, int velocity, int direction, float wait) {
         if (position < 0) {
@@ -245,11 +272,7 @@ public abstract class Zkely extends OpMode
             direction = direction * -1;
         }
         posDrive(Math.round(position*posDriveTurnSize),velocity,-direction,direction,-direction,direction);
-        try {
-            sleep(Math.round(position*wait*posDriveWait));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
     }
 
     public void posJoystick(float position, int velocity, float left_stick_x,float left_stick_y, float right_stick_x,float wait) {
@@ -264,14 +287,14 @@ public abstract class Zkely extends OpMode
         float rfDir = ((-left_stick_x-left_stick_y-right_stick_x));
         float lfDir = ((left_stick_x-left_stick_y+right_stick_x));
         posDrive(Math.round(position*posDriveStraightSize),velocity,rfDir,lfDir,rbDir,lbDir);
-        try {
-            sleep(Math.round(position*wait*posDriveWait));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
     }
 
     public void posDrive(int position, int velocity,float rfDir, float lfDir, float rbDir, float lbDir) {
+        if (currentVoltage < 12.5) {
+            position *= 1.075;
+            position = (int) Math.floor(position);
+        }
 
         rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -358,7 +381,7 @@ public abstract class Zkely extends OpMode
             float target_yaw = 130;
             if (close == true) {
                 if (team == "R") {
-                    target_yaw = 130;
+                    target_yaw = 129;
                 } else if (team == "B") {
                     target_yaw = -130;
                 }
@@ -370,15 +393,17 @@ public abstract class Zkely extends OpMode
                 }
             }
             if (team == "R") {
-                target_tx = 4;
+                target_tx = 3.9f;
             } else {
                 target_tx = 8.5f;
             }
             telemetry.addData("target_yaw",target_yaw);
-            double tx_var = 0.55;
-            double ty_var = 0.5;
-            double yaw_var = 3;
-            double l_speed = 0.5;
+            telemetry.addData("tx",result.getTx());
+            telemetry.addData("ty",result.getTy());
+            double tx_var = 0.5;
+            double ty_var = 0.45;
+            double yaw_var = 1.25;
+            double l_speed = 0.4;
             if (result.isValid()) {
                 last_tag = result.getFiducialResults().get(0).getFiducialId();
                 Pose3D botpose = result.getBotpose();
@@ -395,7 +420,7 @@ public abstract class Zkely extends OpMode
                     } else if (result.getTy() > target_ty + ty_var) {
                         ly = 1;
                     }
-                    if (Math.abs(result.getTy() - target_ty) < 2) {
+                    if (Math.abs(result.getTy() - target_ty) < 3) {
                         ly = ly*0.2f;
                     }
 
@@ -405,7 +430,7 @@ public abstract class Zkely extends OpMode
                         lx = -1;
                     }
                     if (Math.abs(result.getTx() - target_tx) < 3) {
-                        lx = lx*0.2f;
+                        lx = lx*0.3f;
                     }
 
                     if (Math.abs(angle_distance((float) true_yaw,target_yaw)) > yaw_var) {
@@ -426,8 +451,7 @@ public abstract class Zkely extends OpMode
                             rx = rx * 0.7f;
                         }
                     }
-                    telemetry.addData("RX", rx);
-                    telemetry.addData("angle distance",angle_distance(true_yaw,target_yaw));
+                    //this is sketchy, update later
                     if (!close) {
                         lx = 0;
                         ly = 0;
@@ -515,6 +539,7 @@ public abstract class Zkely extends OpMode
     }
 
     public void update_imu() {
+
         robotOrientation = imu.getRobotYawPitchRollAngles();
         robot_yaw = robotOrientation.getYaw(AngleUnit.DEGREES);
         robot_pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
@@ -533,8 +558,12 @@ public abstract class Zkely extends OpMode
         if (true_yaw < -180) {
             true_yaw = true_yaw + 360;
         }
+
+        currentVoltage = voltageSensor.getVoltage();
+
         robot_starting_yaw = (float) (true_yaw-robot_yaw);
         telemetry.addData("true yaw", true_yaw);
+        telemetry.addData("volt", currentVoltage);
     }
 
 }

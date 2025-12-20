@@ -1,0 +1,12 @@
+{
+  "actions" : {
+    "build" : {
+      "enabled" : true,
+      "script" : "cd \/Users\/zel\/Developer\/FTC\/3583-Decode-main\n.\/gradlew assembleDebug"
+    },
+    "run" : {
+      "enabled" : true,
+      "script" : "killall adb\nadb connect 192.168.43.1\nadb connect 192.168.43.1\ncd \/Users\/zel\/Developer\/FTC\/3583-Decode-main\n.\/gradlew installDebug"
+    }
+  }
+}

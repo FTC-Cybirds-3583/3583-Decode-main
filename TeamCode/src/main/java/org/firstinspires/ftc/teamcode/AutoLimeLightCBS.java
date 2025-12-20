@@ -13,7 +13,7 @@ public class AutoLimeLightCBS extends Zkely {
     @Override
     public void init() {
         zkely_init();
-        vel = 1500;
+        vel = 2000;
     }
     @Override
 
@@ -24,102 +24,65 @@ public class AutoLimeLightCBS extends Zkely {
         //move away from goal
         outtake.setPower(outtake_dir * close_max_outtake_power);
         intake.setPower(intake_dir * 1);
-        posStraight(1.7f,vel,-1,0.75f);
+        posStraight(1.5f,(int) Math.floor(vel*1.5f),-1,0.75f);
         while (limelight_target(true,true)) {
             update_imu();
             telemetry.update();
         }
-        try {
-            startShooting(close_max_outtake_power);
-        } catch (InterruptedException e) {
-            telemetry.addData("e",e);
-        }
-        try {
-            sleep(5000);
-        } catch (InterruptedException e) {
-            telemetry.addData("e",e);
-        }
-        try {
-            stopShooting();
-        } catch (InterruptedException e) {
-            telemetry.addData("e",e);
-
-        }
+        sleepMS(500);
+        shootAuto(true);
+        stopShooting();
 
         //LOOKING AT OBELISK
-        posTurn(0.5f,vel,1,0.9f);
+        posTurn(0.65f,vel,1,0.9f);
         while (!limelight_read()) {
             update_imu();
             telemetry.addData("current_tag", current_tag);
             telemetry.update();
         }
-        posTurn(0.485f,vel,-1,0.9f);
+        posTurn(0.65f,vel,-1,0.9f);
 
         //MOVING TO NEXT ROW
         if (current_tag == 23) {
-            //PPG
-            posJoystick(0.45f, vel, 0, 1, -1, 1);
-            try {
-                startIntake();
-            } catch (InterruptedException e) {
-                telemetry.addData("e", e);
-
-            }
-            posStrafe(0.2f, vel, -1, 1);
-            posStraight(0.75f,vel,1,0.85f);
-            posStraight(1.3f,Math.round(vel*0.5f),1,0.9f);
-            try {
-                stopIntake();
-            } catch (InterruptedException e) {
-                telemetry.addData("e",e);
-            }
-            //WORKS UP UNTIL COLLECTION
-            intake.setPower(intake_dir);
-            posTurn(0.5f,vel,1,1);
+            posJoystick(0.5f,vel,-0.85f,0,-0.9f,1);
+            startIntake();
+            posTurn((float) 0.0,vel,0,1);
+            posStraight((float) 1.275,Math.round(vel*0.4f),1,1);
+//6 Intake oFF
+            stopIntake();
+//7 IntakePower 1.0
+            intake.setPower(intake_dir * 1.0);
+//8 OuttakePower close_max_outtake_power
             outtake.setPower(outtake_dir * close_max_outtake_power);
-            posJoystick(1,vel,1,1,0,0.85f);
+//9 Move
+            posJoystick(1.5f,vel,0.75f,0.75f,0.375f,1);
+
         } else if (current_tag == 22) {
-            //PGP
-            posTurn(0.5f,vel,-1,0.8f);
-            posStrafe(1.35f,vel,-1,1);
-            //INTAKE
-            try {
-                startIntake();
-            } catch (InterruptedException e) {
-                telemetry.addData("e", e);
+            posTurn((float) 0.29,vel,-1,1);
+            posStrafe((float) 1.55,vel,-1,1);
+            posTurn((float) 0.16,vel,-1,1);
 
-            }
-            posStraight(0.75f,vel,1,0.85f);
-            posStraight(1.3f,Math.round(vel*0.5f),1,0.9f);
-            try {
-                stopIntake();
-            } catch (InterruptedException e) {
-                telemetry.addData("e",e);
-            }
-            //WORKS UP UNTIL COLLECTION
-            intake.setPower(intake_dir);
-            posStraight(2.05f,vel,-1,0.8f);
+            startIntake();
+            posTurn((float) 0.0,vel,0,1);
+            posStraight((float) 1.275,Math.round(vel*0.4f),1,1);
+            stopIntake();
+            intake.setPower(intake_dir * 1.0);
             outtake.setPower(outtake_dir * close_max_outtake_power);
-            posStrafe(1.35f,vel,1,1);
-            posTurn(0.5f,vel,1,1);
+
+            posTurn((float) 0.34,vel,-1,1);
+            posStraight((float) 1.95,vel,-1,1);
+            posTurn((float) 0.82,vel,1,1);
+
+
         } else if (current_tag == 21) {
             //PGP
-            posTurn(0.5f,vel,-1,0.8f);
+            posTurn(0.525f,vel,-1,0.8f);
             posStrafe(2.45f,vel,-1,0.65f);
             //INTAKE
-            try {
-                startIntake();
-            } catch (InterruptedException e) {
-                telemetry.addData("e", e);
-
-            }
+            startIntake();
             posStraight(0.75f,vel,1,0.85f);
-            posStraight(1.3f,Math.round(vel*0.5f),1,0.9f);
-            try {
-                stopIntake();
-            } catch (InterruptedException e) {
-                telemetry.addData("e",e);
-            }
+            posStraight(1.3f,Math.round(vel*0.3f),1,0.9f);
+            stopIntake();
             //WORKS UP UNTIL COLLECTION
             intake.setPower(intake_dir);
             posStraight(2.05f,vel,-1,0.75f);
@@ -132,16 +95,7 @@ public class AutoLimeLightCBS extends Zkely {
             update_imu();
             telemetry.update();
         }
-        try {
-            startShooting(close_max_outtake_power + 0.025f);
-        } catch (InterruptedException e) {
-            telemetry.addData("e",e);
-        }
-        try {
-            sleep(5000);
-        } catch (InterruptedException e) {
-            telemetry.addData("e",e);
-        }
+        shootAuto(true);
         posStrafe(1,vel,-1,0);
     }
     @Override
