@@ -45,50 +45,47 @@ public class AutoLimeLightCBS extends Zkely {
         //MOVING TO NEXT ROW
         if (current_tag == 23) {
             posJoystick(0.5f,vel,-0.85f,0,-0.9f,1);
+
             startIntake();
             posTurn((float) 0.0,vel,0,1);
             posStraight((float) 1.275,Math.round(vel*0.4f),1,1);
-//6 Intake oFF
             stopIntake();
-//7 IntakePower 1.0
             intake.setPower(intake_dir * 1.0);
-//8 OuttakePower close_max_outtake_power
             outtake.setPower(outtake_dir * close_max_outtake_power);
-//9 Move
+
             posJoystick(1.5f,vel,0.75f,0.75f,0.375f,1);
-
         } else if (current_tag == 22) {
-            posTurn((float) 0.29,vel,-1,1);
-            posStrafe((float) 1.55,vel,-1,1);
-            posTurn((float) 0.16,vel,-1,1);
+
+            posJoystick(0.5f,vel,-0.85f,0,-0.9f,0.9f);
+            posStrafe(1.05f,vel,-1,0.85f);
 
             startIntake();
             posTurn((float) 0.0,vel,0,1);
-            posStraight((float) 1.275,Math.round(vel*0.4f),1,1);
+            posStraight((float) 1.5,Math.round(vel*0.4f),1,0.9f);
             stopIntake();
             intake.setPower(intake_dir * 1.0);
             outtake.setPower(outtake_dir * close_max_outtake_power);
 
-            posTurn((float) 0.34,vel,-1,1);
-            posStraight((float) 1.95,vel,-1,1);
-            posTurn((float) 0.82,vel,1,1);
+            posStraight((float) 1.5,vel,-1,1);
+            posStrafe(1.225f,vel,1,1);
+            posTurn(0.5f,vel,1,1);
 
 
         } else if (current_tag == 21) {
-            //PGP
-            posTurn(0.525f,vel,-1,0.8f);
-            posStrafe(2.45f,vel,-1,0.65f);
-            //INTAKE
+            posJoystick(0.5f,vel,-0.85f,0,-0.9f,0.9f);
+            posStrafe(2.15f,vel,-1,0.85f);
+
             startIntake();
-            posStraight(0.75f,vel,1,0.85f);
-            posStraight(1.3f,Math.round(vel*0.3f),1,0.9f);
+            posTurn((float) 0.0,vel,0,1);
+            posStraight((float) 1.5,Math.round(vel*0.4f),1,0.9f);
             stopIntake();
-            //WORKS UP UNTIL COLLECTION
-            intake.setPower(intake_dir);
-            posStraight(2.05f,vel,-1,0.75f);
+            intake.setPower(intake_dir * 1.0);
             outtake.setPower(outtake_dir * close_max_outtake_power);
-            posStrafe(2.35f,vel,1,0.9f);
-            posTurn(0.5f,vel,1,0.8f);
+
+            posStraight((float) 1.5,vel,-1,1);
+            posStrafe(2.3f,vel,1,1);
+            posTurn(0.5f,vel,1,1);
+
         }
         //FINAL SHOOT
         while (limelight_target(true,true)) {

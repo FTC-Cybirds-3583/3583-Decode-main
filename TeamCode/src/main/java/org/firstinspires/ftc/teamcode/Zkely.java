@@ -276,6 +276,10 @@ public abstract class Zkely extends OpMode
     }
 
     public void posJoystick(float position, int velocity, float left_stick_x,float left_stick_y, float right_stick_x,float wait) {
+        if (currentVoltage < 12.6) {
+            position *= 1.075;
+            position = (int) Math.floor(position);
+        }
         if (position < 0) {
             position = Math.abs(position);
             left_stick_x = left_stick_x * -1;
@@ -291,10 +295,6 @@ public abstract class Zkely extends OpMode
     }
 
     public void posDrive(int position, int velocity,float rfDir, float lfDir, float rbDir, float lbDir) {
-        if (currentVoltage < 12.5) {
-            position *= 1.075;
-            position = (int) Math.floor(position);
-        }
 
         rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
