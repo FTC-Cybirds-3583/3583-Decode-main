@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 
 import java.lang.reflect.Array;
@@ -20,13 +21,19 @@ public class TeleOpMode extends Zkely
 
     @Override
 
-    public void init() {
+    public void runOpMode() {
         zkely_init();
-
         r_bump_1 = false;
         l_bump_1 = false;
         dpad_up_1 = false;
         dpad_down_1 = false;
+        brakeSlides();
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            teleLoop();
+        }
     };
 
     public void do_p1_things() {
@@ -51,10 +58,13 @@ public class TeleOpMode extends Zkely
     }
     public void slide_control() {
         if (gamepad1.dpad_up && !dpad_up_1) {
-            posSlide(slide_up_pos,500);
+            //posSlide(slide_up_pos,500);
         }
         if (gamepad1.dpad_down && !dpad_down_1) {
-            posSlide(slide_down_pos,100);
+            //posSlide(slide_down_pos,100);
+        }
+        if (!rightSlide.isBusy() && !leftSlide.isBusy()) {
+            brakeSlides();
         }
         dpad_up_1 = gamepad1.dpad_up;
         dpad_down_1 = gamepad1.dpad_down;
@@ -66,7 +76,6 @@ public class TeleOpMode extends Zkely
         }
         outtake.setPower(outtake_dir * gamepad1.left_trigger*max_outtake_power);
 
-        telemetry.addData("starting yaw", robot_starting_yaw);
         telemetry.addData("team",team);
     }
 
@@ -74,8 +83,19 @@ public class TeleOpMode extends Zkely
         //To do
     }
 
-    @Override
-    public void loop() {
+    public void teleLoop() {
+        if (gamepad1.dpad_left) {
+            rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        }else {
+            rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        }
         update_imu();
         do_p1_things();
         do_p2_things();
@@ -103,6 +123,7 @@ public class TeleOpMode extends Zkely
         if (gamepad1.back) {
             team = "B";
         }
+        telemetry.update();
 
     }
 }
