@@ -383,10 +383,7 @@ public abstract class Zkely extends LinearOpMode
 
     public boolean limelight_target(boolean go,boolean close) {
         //STARTING YAW USES RACING AWAY FROM RED GOAL = 0, SO AUTOBR USES 180
-        rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         LLResult result = limelight.getLatestResult();
         float lx = 0;
         float ly = 0;
@@ -509,6 +506,12 @@ public abstract class Zkely extends LinearOpMode
         }
         power_dual_joy_control(0,0,0,0,0);
         return false;
+    }
+    public void set_motor_modes(DcMotor.RunMode mode) {
+        rightRear.setMode(mode);
+        leftRear.setMode(mode);
+        rightFront.setMode(mode);
+        leftFront.setMode(mode);
     }
     public boolean yaw_target(float target_yaw) {
         rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
