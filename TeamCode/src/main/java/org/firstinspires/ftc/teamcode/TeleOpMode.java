@@ -30,38 +30,41 @@ public class TeleOpMode extends Zkely
         brakeSlides();
 
         waitForStart();
+        speed = 1;
 
         while (opModeIsActive()) {
             teleLoop();
         }
     };
+    public void bumpers() {
+        if (gamepad1.share && !l_bump_1) {
+            outtake_power -= 0.05;
+        }
+        if (gamepad1.options && !r_bump_1) {
+            outtake_power += 0.05;
+        }
+        l_bump_1 = gamepad1.share;
+        r_bump_1 = gamepad1.options;
+    }
 
     public void do_p1_things() {
-        p1_fine_speed_control();
         slide_control();
         intake_control();
-
-        if (!limelight_target(gamepad1.left_stick_button, true)) {
-            if (!limelight_target(gamepad1.right_stick_button,false)) {
-                power_dual_joy_control(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_stick_y, speed);
-            }
+        bumpers();
+        boolean button = gamepad1.right_bumper;
+        if (!limelight_teleop_circle(button)) {
+            float rx = gamepad1.right_stick_x;
+            if (button) { rx = 0;}
+            power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,rx,gamepad1.right_stick_y,speed);
         }
 
-    }
-    public void p1_fine_speed_control() {
-        if (gamepad1.left_bumper) {
-            max_outtake_power = close_max_outtake_power;
-        }
-        if (gamepad1.right_bumper) {
-            max_outtake_power = far_max_outtake_power;
-        }
     }
     public void slide_control() {
         if (gamepad1.dpad_up && !dpad_up_1) {
-            //posSlide(slide_up_pos,500);
+            posSlide(slide_up_pos,500);
         }
         if (gamepad1.dpad_down && !dpad_down_1) {
-            //posSlide(slide_down_pos,100);
+            posSlide(slide_down_pos,100);
         }
         if (!rightSlide.isBusy() && !leftSlide.isBusy()) {
             brakeSlides();
@@ -74,7 +77,11 @@ public class TeleOpMode extends Zkely
         if (gamepad1.right_trigger > 0.2) {
             midtake.setPower(midtake_dir * 1);
         }
-        outtake.setPower(outtake_dir * gamepad1.left_trigger*max_outtake_power);
+        if (gamepad1.left_trigger > 0.2) {
+            outtake.setVelocity(outtake_velocity);
+        } else {
+            outtake.setPower(0);
+        }
 
         telemetry.addData("team",team);
     }
@@ -97,15 +104,17 @@ public class TeleOpMode extends Zkely
 
         }
         update_imu();
+        update_outtake_pidf();
+        update_outtake_velocity();
         do_p1_things();
         do_p2_things();
 
         if (gamepad1.b) {
-            midtake.setPower(1);
-            midtake_2.setPower(1);
+            midtake.setPower(midtake_dir);
+            midtake_2.setPower(midtake_dir);
         } else if (gamepad1.a) {
-            midtake.setPower(-1);
-            midtake_2.setPower(-1);
+            midtake.setPower(-1*midtake_dir);
+            midtake_2.setPower(-1*midtake_dir);
         } else {
             midtake.setPower(0);
             midtake_2.setPower(0);
@@ -123,6 +132,9 @@ public class TeleOpMode extends Zkely
         if (gamepad1.back) {
             team = "B";
         }
+        telemetry.addData("outtake vel",outtake.getVelocity());
+        telemetry.addData("outtake target vel",outtake_velocity);
+        telemetry.addData("distance",apriltag_distance);
         telemetry.update();
 
     }

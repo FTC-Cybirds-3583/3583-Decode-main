@@ -24,7 +24,7 @@ public class AutoLimeLightCBS extends Zkely {
         team = "B";
 
         //move away from goal
-        outtake.setPower(outtake_dir * close_max_outtake_power);
+        outtake.setPower(outtake_dir * outtake_power);
         intake.setPower(intake_dir * 1);
         posStraight(1.75f,(int) Math.floor(vel*1.25f),-1,0.75f);
         while (limelight_target(true,true) && opModeIsActive()) {
@@ -55,7 +55,7 @@ public class AutoLimeLightCBS extends Zkely {
             intake.setPower(intake_dir * 1.0);
             midtake_2.setPower(-1f * midtake_dir * midtake_power);
             midtake.setPower(-0.8f * midtake_dir * midtake_power);
-            outtake.setPower(outtake_dir * close_max_outtake_power);
+            outtake.setPower(outtake_dir * outtake_power);
             posJoystick(0.9f,vel,1,1.2f,0.475f,1);
             midtake_2.setPower(0 * midtake_power);
         } else if (current_tag == 22) {
@@ -68,7 +68,7 @@ public class AutoLimeLightCBS extends Zkely {
             intake.setPower(intake_dir * 1.0);
             midtake_2.setPower(-1f * midtake_dir * midtake_power);
             midtake.setPower(-0.8f * midtake_dir * midtake_power);
-            outtake.setPower(outtake_dir * close_max_outtake_power);
+            outtake.setPower(outtake_dir * outtake_power);
             posStraight((float) 1.3,vel,-1,0.9f);
             midtake_2.setPower(0);
             posStrafe(1,vel,1,0.8f);
@@ -85,7 +85,7 @@ public class AutoLimeLightCBS extends Zkely {
             intake.setPower(intake_dir * 1.0);
             midtake_2.setPower(-1f * midtake_dir * midtake_power);
             midtake.setPower(-0.8f * midtake_dir * midtake_power);
-            outtake.setPower(outtake_dir * close_max_outtake_power);
+            outtake.setPower(outtake_dir * outtake_power);
 
             posStraight((float) 1.3,vel,-1,0.8f);
             midtake_2.setPower(0);
