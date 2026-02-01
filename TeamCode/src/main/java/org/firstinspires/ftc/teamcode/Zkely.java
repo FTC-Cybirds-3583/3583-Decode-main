@@ -3,8 +3,10 @@ package org.firstinspires.ftc.teamcode;
 import static java.lang.Thread.sleep;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -15,16 +17,20 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import java.util.List;
 import java.util.Map;
 
+@Disabled
 public abstract class Zkely extends LinearOpMode
 {
     DcMotorEx rightRear;
@@ -33,7 +39,7 @@ public abstract class Zkely extends LinearOpMode
     DcMotorEx leftFront;
     DcMotorEx rightSlide;
     DcMotorEx leftSlide;
-    DcMotor intake;
+    DcMotorEx intake;
     DcMotorEx outtake;
     IMU.Parameters myIMUparameters;
     IMU imu;
@@ -41,11 +47,11 @@ public abstract class Zkely extends LinearOpMode
     CRServo midtake;
     CRServo midtake_2;
     Servo innertake;
-    double midtake_up_pos = 0;
+
+    PIDFCoefficients PosDriveCo = new PIDFCoefficients(10,0,0,10);
     float midtake_power = 1f;
-    double midtake_down_pos = 0.06;
     double innertake_up_pos = 0;
-    double innertake_down_pos = 0.5;
+    double innertake_down_pos = 0.525;
     Pose3D last_botpose;
     int intake_dir = -1;
     int midtake_dir = 1;
@@ -70,9 +76,9 @@ public abstract class Zkely extends LinearOpMode
     int slide_target_pos = 50;
     double speed;
     double speed_fine_inc = 0.05;
-    int posDriveStraightSize = 717; // js about perfect // old 1000
-    int posDriveStrafeSize = 771; // old 1075
-    int posDriveTurnSize = 689; // old 960
+    int posDriveStraightSize = 715; // js about perfect // old 1000
+    int posDriveStrafeSize = 785; // old 1075
+    int posDriveTurnSize = 685; // old 960
 
     float outtake_power = 1.0f;
     float current_ty = 0;
@@ -90,11 +96,16 @@ public abstract class Zkely extends LinearOpMode
     float target_distance = 0;
     int outtake_velocity = 1000;
     boolean latest_result_valid = false;
-    PIDFCoefficients MHpidfcoHigh = new PIDFCoefficients(7.6,0,0,15.2);
-    PIDFCoefficients MHpidfcoMed = new PIDFCoefficients(9.9,0,0,15.2);
+    PIDFCoefficients outtake_pidf = new PIDFCoefficients(280,0,0,15);
+    LLResultTypes.FiducialResult latest_fiducial;
+    int tag_team = 0;
+
+    int side_modifier = 1;
+    float startingCurrent = 0;
     public void zkely_init() {
 
         current_tag = 23;
+        tag_team = 0;
 
         rightRear = hardwareMap.get(DcMotorEx.class,"backright");
         leftRear = hardwareMap.get(DcMotorEx.class,"backleft");
@@ -103,7 +114,7 @@ public abstract class Zkely extends LinearOpMode
 
         rightSlide = hardwareMap.get(DcMotorEx.class, "rightslide");
         leftSlide = hardwareMap.get(DcMotorEx.class, "leftslide");
-        intake = hardwareMap.dcMotor.get("intake");
+        intake = hardwareMap.get(DcMotorEx.class,"intake");
         outtake = hardwareMap.get(DcMotorEx.class, "outtake");
         imu = hardwareMap.get(IMU.class, "imu");
 
@@ -114,6 +125,8 @@ public abstract class Zkely extends LinearOpMode
         innertake.setPosition(innertake_down_pos);
 
         voltageSensor = hardwareMap.get(VoltageSensor.class, "Control Hub");
+
+        startingCurrent = (float) voltageSensor.getVoltage();
 
         outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -161,8 +174,6 @@ public abstract class Zkely extends LinearOpMode
         leftSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        //posSlide(slide_down_pos,800);
-
         brakeSlides();
 
         rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -206,10 +217,8 @@ public abstract class Zkely extends LinearOpMode
     }
     public void power_dual_joy_control(float left_stick_x,float left_stick_y,float right_stick_x,float right_stick_y,double s) {
         //don't ask how this works, it is wonderful
-        rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         if (Math.abs(right_stick_x) > 0.5) {
             s = 1;
         }
@@ -218,7 +227,7 @@ public abstract class Zkely extends LinearOpMode
         rightFront.setPower(Math.min(rfDefDir*s*(-left_stick_x-left_stick_y-right_stick_x),1));
         leftFront.setPower(Math.min(lfDefDir*s*(left_stick_x-left_stick_y+right_stick_x),1));
     }
-    public void shootAuto(boolean close) {
+    public void shootAutoPower(boolean close) {
         float power = outtake_power;
         if (currentVoltage > 12.8) {
             power *= 0.8125;
@@ -231,21 +240,45 @@ public abstract class Zkely extends LinearOpMode
         } else if (currentVoltage > 11.3) {
             power *= 0.975;
         }
-        startShooting(power*0.97f);
+        startShootingPower(power*0.97f);
         sleepMS(1300);
         outtake.setPower(outtake_dir * power);
         sleepMS(3700);
     }
-    public void startShooting(float power) {
+    public void shootAutoVelocity() {
+        run_updates();
+        startShootingVelocity(outtake_velocity);
+        sleepMS(3500);
+        stopShooting();
+    }
+    public void startOuttakeVelocity(float velocity) {
+        outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        outtake.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,outtake_pidf);
+        outtake.setVelocity(velocity);
+    }
+    public void startShootingVelocity(float velocity) {
+        telemetry.addData("start shoot vel",outtake_velocity);
         innertake.setPosition(innertake_down_pos);
-        midtake.setPower(midtake_dir * -1);
+        midtake.setPower(midtake_dir * -1 * midtake_power);
         sleepMS(300);
         intake.setPower(intake_dir * 1);
         midtake.setPower(midtake_dir * midtake_power);
         midtake_2.setPower(midtake_dir * midtake_power);
+        startOuttakeVelocity(velocity);
+
+    }
+    public void startShootingPower(float power) {
+        innertake.setPosition(innertake_down_pos);
+        midtake.setPower(midtake_dir * -1 * midtake_power);
+        sleepMS(300);
+        intake.setPower(intake_dir * 1);
+        midtake.setPower(midtake_dir * midtake_power);
+        midtake_2.setPower(midtake_dir * midtake_power);
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         outtake.setPower(outtake_dir * power);
     }
     public void stopShooting() {
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake.setPower(0);
         midtake.setPower(0);
         midtake_2.setPower(0);
@@ -255,70 +288,79 @@ public abstract class Zkely extends LinearOpMode
         innertake.setPosition(innertake_up_pos);
         sleepMS(300);
         intake.setPower(intake_dir * 1);
-        midtake.setPower(midtake_dir);
+        midtake.setPower(midtake_dir * midtake_power);
+        midtake_2.setPower(midtake_dir*-1*midtake_power);
     }
     public void stopIntake() {
         innertake.setPosition(innertake_down_pos);
         sleepMS(300);
         intake.setPower(0);
         midtake.setPower(0);
+        midtake_2.setPower(0);
     }
     public void sleepMS(int ms) {
         sleep(ms);
     }
-    public boolean motorBelowTolerance(DcMotorEx motor,int tolerance) {
+    public boolean motorBelowTolerance(DcMotorEx motor,float tolerance) {
         return Math.abs(motor.getCurrentPosition() - motor.getTargetPosition()) < tolerance;
     }
-    public boolean any_drive_motor_busy() {
-        int tolerance = 10;
+    public boolean motorMoving(DcMotorEx motor,int tolerance) {
+        return Math.abs(motor.getVelocity()) > tolerance;
+    }
+    public boolean any_drive_motor_busy(float tolerance) {
         //return rightRear.isBusy() || rightFront.isBusy() || leftRear.isBusy() || leftFront.isBusy();
         boolean bool = motorBelowTolerance(rightRear,tolerance) && motorBelowTolerance(leftRear,tolerance) && motorBelowTolerance(leftFront,tolerance) && motorBelowTolerance(rightFront,tolerance);
         return !bool;
+    }
+    public boolean any_drive_motor_moving() {
+        int tolerance = 50;
+        //return rightRear.isBusy() || rightFront.isBusy() || leftRear.isBusy() || leftFront.isBusy();
+        boolean bool = motorMoving(rightRear,tolerance) || motorMoving(leftRear,tolerance) || motorMoving(leftFront,tolerance) || motorMoving(rightFront,tolerance);
+        return bool;
     }
     public void posStraight(float position, int velocity, int direction,float wait) {
         if (position < 0) {
             position = Math.abs(position);
             direction = direction * -1;
         }
-        posDrive(Math.round(position*posDriveStraightSize),velocity,direction,direction,direction,direction);
-        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
+        posDrive(Math.round(position*posDriveStraightSize),velocity,direction,direction,direction,direction,60);
     }
     public void posStrafe(float position, int velocity, int direction, float wait) {
         if (position < 0) {
             position = Math.abs(position);
             direction = direction * -1;
         }
-        posDrive(Math.round(position*posDriveStrafeSize),velocity,-direction,direction,direction,-direction);
-        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
+        posDrive(Math.round(position*posDriveStrafeSize),velocity,-direction,direction,direction,-direction,50);
     }
     public void posTurn(float position, int velocity, int direction, float wait) {
         if (position < 0) {
             position = Math.abs(position);
             direction = direction * -1;
         }
-        posDrive(Math.round(position*posDriveTurnSize),velocity,-direction,direction,-direction,direction);
-        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
+        posDrive(Math.round(position*posDriveTurnSize),velocity,-direction,direction,-direction,direction,45);
     }
 
     public void posJoystick(float position, int velocity, float left_stick_x,float left_stick_y, float right_stick_x,float wait) {
-        if (currentVoltage < 12.6) {
-            position *= 1.1f;
-        }
+
         if (position < 0) {
             position = Math.abs(position);
             left_stick_x = left_stick_x * -1;
             right_stick_x = right_stick_x * -1;
             left_stick_y = left_stick_y * -1;
         }
+        left_stick_x *= (float) (posDriveStrafeSize+30) /posDriveStraightSize;
+        right_stick_x *= (float) (posDriveTurnSize+15) /posDriveStraightSize;
         float rbDir = ((left_stick_x-left_stick_y-right_stick_x));
         float lbDir = ((-left_stick_x-left_stick_y+right_stick_x));
         float rfDir = ((-left_stick_x-left_stick_y-right_stick_x));
         float lfDir = ((left_stick_x-left_stick_y+right_stick_x));
-        posDrive(Math.round(position*posDriveStraightSize),velocity,rfDir,lfDir,rbDir,lbDir);
-        sleepMS(Math.round(position*wait*posDriveWait*(1500f /velocity)) + 400);
+        posDrive(Math.round(position*posDriveStraightSize),velocity,rfDir,lfDir,rbDir,lbDir,60);
     }
 
-    public void posDrive(int position, int velocity,float rfDir, float lfDir, float rbDir, float lbDir) {
+    public void posDrive(int position, int velocity,float rfDir, float lfDir, float rbDir, float lbDir,float stop_tolerance) {
+        //float pos_battery_mod = (float) (0.107f*voltageSensor.getVoltage() - 0.325f);
+        //float float_position = position * pos_battery_mod;
+        //position = (int) Math.floor((double) float_position);
 
         rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -340,6 +382,16 @@ public abstract class Zkely extends LinearOpMode
         rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        rightFront.setPositionPIDFCoefficients(PosDriveCo.p);
+        leftFront.setPositionPIDFCoefficients(PosDriveCo.p);
+        rightRear.setPositionPIDFCoefficients(PosDriveCo.p);
+        leftRear.setPositionPIDFCoefficients(PosDriveCo.p);
+
+        rightFront.setVelocityPIDFCoefficients(PosDriveCo.p,PosDriveCo.i,PosDriveCo.d,PosDriveCo.f);
+        leftFront.setVelocityPIDFCoefficients(PosDriveCo.p,PosDriveCo.i,PosDriveCo.d,PosDriveCo.f);
+        rightRear.setVelocityPIDFCoefficients(PosDriveCo.p,PosDriveCo.i,PosDriveCo.d,PosDriveCo.f);
+        leftRear.setVelocityPIDFCoefficients(PosDriveCo.p,PosDriveCo.i,PosDriveCo.d,PosDriveCo.f);
+
         rightFront.setTargetPositionTolerance(tolerance);
         leftFront.setTargetPositionTolerance(tolerance);
         rightRear.setTargetPositionTolerance(tolerance);
@@ -349,6 +401,18 @@ public abstract class Zkely extends LinearOpMode
         leftFront.setVelocity(velocity);
         rightRear.setVelocity(velocity);
         leftRear.setVelocity(velocity);
+        ElapsedTime time_since_posdrive = new ElapsedTime();
+        while (opModeIsActive() && any_drive_motor_busy(stop_tolerance)) {
+            if (time_since_posdrive.milliseconds() > (double) (posDriveWait * position)/750 + 500) {
+                break;
+            }
+        }
+        sleepMS(150);
+        /*set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setPower(0);
+        leftFront.setPower(0);
+        rightRear.setPower(0);
+        leftRear.setPower(0);*/
     }
     public void posSlide(int position, int velocity) {
         rightSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -383,22 +447,52 @@ public abstract class Zkely extends LinearOpMode
         if (result != null) {
             if (!result.getFiducialResults().isEmpty()) {
                 current_tag = result.getFiducialResults().get(0).getFiducialId();
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
     public boolean limelight_teleop_circle(boolean go) {
         if (!limelight.getLatestResult().isValid() || !go) { return false; };
+        if (current_tag != 20 && current_tag != 24) { return false; };
         float tx_stick = Math.signum(correction_angle);
 
-        tx_stick *= (float) Math.abs(map(0.05f, 1, 0, 35, (float) Math.abs(correction_angle)));
-        if (Math.abs(tx_stick) < 0.07f) {
+        tx_stick *= Math.abs(map(0.02f, 1, 0, 35, Math.abs(correction_angle)));
+        if (Math.abs(tx_stick) < 0.06f) {
             tx_stick = 0;
         }
         power_dual_joy_control(gamepad1.left_stick_x, gamepad1.left_stick_y, tx_stick, gamepad1.right_stick_y, speed);
 
         if (tx_stick == 0) {
+            return false;
+        }
+        return true;
+    }
+    public boolean new_limelight_target() {
+        run_updates();
+        if (current_tag != 20 && current_tag != 24) { return true; };
+
+        set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        float ty_target = 6f;
+        float tx_target = 0;
+        float tag_yaw = 130;
+        if (current_tag == 20) { tag_yaw = -130; }
+
+        float rx = Math.signum(true_yaw - tag_yaw);
+        float ly = Math.signum(current_ty-ty_target);
+        float lx = Math.signum(current_tx );
+
+        rx *= Math.abs(map(0.04f, 1, 0, 70, Math.abs(angle_distance(tag_yaw,true_yaw))));
+        ly *= Math.abs(map(0.02f, 1, 0, 8, Math.abs(current_ty-ty_target)));
+        lx *= Math.abs(map(0.02f, 1, 0, 10, Math.abs(current_tx-tx_target)));
+
+        if (Math.abs(rx) < 0.1f) { rx = 0;}
+        if (Math.abs(ly) < 0.1f) { ly = 0;}
+        if (Math.abs(lx) < 0.1f) { lx = 0;}
+
+        power_dual_joy_control(lx,ly,rx,0,1);
+
+        if (rx == 0 && ly == 0 && lx == 0) {
             return false;
         }
         return true;
@@ -535,6 +629,17 @@ public abstract class Zkely extends LinearOpMode
         leftRear.setMode(mode);
         rightFront.setMode(mode);
         leftFront.setMode(mode);
+        if (mode == DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
+            rightRear.setPower(0);
+            leftRear.setPower(0);
+            rightFront.setPower(0);
+            leftFront.setPower(0);
+
+            rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
     }
 
     public float angle_distance(float angle,float target) {
@@ -545,21 +650,21 @@ public abstract class Zkely extends LinearOpMode
     }
 
     public float apriltag_distance() {
-        telemetry.addData("","----Apriltag Distance----");
         double limelight_angle_deg = 7.675;
 
         double apriltag_height_in = 29.5f;
         double limelight_height_in = 14.75f;
         double height_total_in = apriltag_height_in - limelight_height_in;
-        telemetry.addData("height total (inches)",height_total_in);
 
         double angle_total_deg = limelight_angle_deg + current_ty;
-        telemetry.addData("total angle (degrees)",angle_total_deg);
 
         double distance = height_total_in * (Math.cos(Math.toRadians(angle_total_deg)))/Math.sin(Math.toRadians(angle_total_deg));
         return (float) distance;
     }
     public float correction_angle() {
+        if (!latest_result_valid) {
+            return 0;
+        }
         float distance = apriltag_distance;
         float tx_rad = (float) Math.toRadians(current_tx);
         float yaw_rad = (float) Math.toRadians(target_yaw);
@@ -588,12 +693,17 @@ public abstract class Zkely extends LinearOpMode
                 true_yaw = (float) botpose.getOrientation().getYaw();
                 current_ty = (float) result.getTy();
                 current_tx = (float) result.getTx();
+                current_tag = result.getFiducialResults().get(0).getFiducialId();
+                latest_fiducial = result.getFiducialResults().get(0);
                 target_yaw = (float) result.getFiducialResults().get(0).getTargetPoseRobotSpace().getOrientation().getPitch();
-                telemetry.addData("ty",result.getTy());
-                telemetry.addData("target_yaw",target_yaw);
             }
         }
         apriltag_distance = apriltag_distance();
+
+        midtake_power = (float) (1.135f - 0.0019f * apriltag_distance);
+        if (voltageSensor.getVoltage() < 12.9f) { midtake_power += (float) ((13-voltageSensor.getVoltage()) * 0.065); }
+        if (midtake_power > 1) { midtake_power = 1; }
+
         if (true_yaw > 180) {
             true_yaw = true_yaw - 360;
         }
@@ -604,9 +714,7 @@ public abstract class Zkely extends LinearOpMode
         currentVoltage = voltageSensor.getVoltage();
 
         robot_starting_yaw = (float) (true_yaw-robot_yaw);
-        telemetry.addData("true yaw", true_yaw);
-        telemetry.addData("volt", currentVoltage);
-        telemetry.addData("ty",current_ty);
+        telemetry.addData("midtake power",midtake_power);
         correction_angle = correction_angle();
     }
 
@@ -624,27 +732,88 @@ public abstract class Zkely extends LinearOpMode
 
     public void update_outtake_velocity() {
         //DISTANCE : VELOCITY
-        //125 : 1340
-        //83 : 1220
-        //70 : 1100
-        //54 : 1060
+        //82 : 1225
+        //200 : 1525
 
         if (!latest_result_valid) {
-            outtake_velocity = 1000;
             return;
         }
 
-        float a = 360.11508f;
-        float b = 0.280901f;
-        float c = -53.97212f;
-        outtake_velocity = (int) Math.floor((double) (a*Math.pow(apriltag_distance,b)) + c);
+        float a = 2.645f;
+        float b = 1025f;
+        outtake_velocity = (int) (a * apriltag_distance + b);
+
     }
 
     public void update_outtake_pidf() {
-        float P = 280;
-        float F = (float) (-449.47321*Math.pow(outtake_velocity,-0.619854f)+48.96472-(2.35*currentVoltage));
+        float P = 275; //275
+        if (apriltag_distance > 140) {
+            P = 300;
+        }
+        telemetry.addData("P",P);
+
+        float F =  (float) (-449.47321*Math.pow(outtake_velocity,-0.619854f)+48.96472-(2.35*currentVoltage));
+        telemetry.addData("F",F);
         PIDFCoefficients pidfCoef = new PIDFCoefficients(P, 0.0 ,0.0,F);
+        outtake_pidf = pidfCoef;
+        outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         outtake.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoef);
+    }
+    public void run_updates() {
+        update_imu();
+        update_outtake_velocity();
+        update_outtake_power();
+        update_outtake_pidf();
+    }
+    public void new_limelight_target_auto() {
+        ElapsedTime time_since_start = new ElapsedTime();
+        while (new_limelight_target() && opModeIsActive()) {
+            if (time_since_start.milliseconds() > 2000) {
+                break;
+            }
+        }
+        set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+    public void limelight_read_auto() {
+        while (limelight_read() && opModeIsActive()) {
+        }
+    }
+    public void start_outtake_velocity_auto() {
+        run_updates();
+        startOuttakeVelocity(outtake_velocity);
+    }
+
+    public void set_tag_team() {
+        tag_team = current_tag;
+        if (tag_team == 20) {
+            side_modifier = -1;
+        } else if (tag_team == 24) {
+            side_modifier = 1;
+        }
+    }
+
+    public void limit_power() {
+        if (rightFront.getCurrent(CurrentUnit.MILLIAMPS) < 500) {
+            rightFront.setPower(0);
+        }
+        if (leftFront.getCurrent(CurrentUnit.MILLIAMPS) < 500) {
+            leftFront.setPower(0);
+        }
+        if (rightRear.getCurrent(CurrentUnit.MILLIAMPS) < 500) {
+            rightRear.setPower(0);
+        }
+        if (leftRear.getCurrent(CurrentUnit.MILLIAMPS) < 500) {
+            leftRear.setPower(0);
+        }
+    }
+
+    public boolean motor_at_velocity(DcMotorEx motor,int target_velocity,float tolerance) {
+        boolean result = false;
+        if (Math.abs(motor.getVelocity() - target_velocity) <= tolerance) {
+            result = true;
+        }
+        return result;
+
     }
 }
 

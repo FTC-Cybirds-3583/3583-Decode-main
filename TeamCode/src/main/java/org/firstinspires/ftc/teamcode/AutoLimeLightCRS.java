@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous( name = "Red-Shoot-CLOSE")
+@Disabled
+@Autonomous( name = "ZZRed-Shoot-CLOSE")
 
 public class AutoLimeLightCRS extends Zkely {
     private ElapsedTime runtime = new ElapsedTime();
@@ -17,21 +19,21 @@ public class AutoLimeLightCRS extends Zkely {
         team = "R";
 
         //move away from goal
-        outtake.setPower(outtake_dir * outtake_power);
+        startOuttakeVelocity(outtake_velocity);
         intake.setPower(intake_dir * 1);
         posStraight(1.75f,(int) Math.floor(vel*1.25f),-1,0.75f);
         while (limelight_target(true,true) && opModeIsActive()) {
-            update_imu();
+            run_updates();
             telemetry.update();
         }
         sleepMS(500);
-        shootAuto(true);
+        shootAutoVelocity();
         stopShooting();
 
         //LOOKING AT OBELISK
         posTurn(0.65f,vel,-1,0.9f);
         while (!limelight_read() && opModeIsActive()) {
-            update_imu();
+            run_updates();
             telemetry.addData("current_tag", current_tag);
             telemetry.update();
         }
@@ -49,7 +51,7 @@ public class AutoLimeLightCRS extends Zkely {
             intake.setPower(intake_dir * 1.0);
             midtake_2.setPower(-1f * midtake_dir * midtake_power);
             midtake.setPower(-0.8f * midtake_dir * midtake_power);
-            outtake.setPower(outtake_dir * outtake_power);
+            startOuttakeVelocity(outtake_velocity);
             posJoystick(0.9f,vel,-1,1.2f,-0.475f,1);
             midtake_2.setPower(0);
         } else if (current_tag == 22) {
@@ -62,7 +64,7 @@ public class AutoLimeLightCRS extends Zkely {
             intake.setPower(intake_dir * 1.0);
             midtake_2.setPower(-1f * midtake_dir * midtake_power);
             midtake.setPower(-0.8f * midtake_dir * midtake_power);
-            outtake.setPower(outtake_dir * outtake_power);
+            startOuttakeVelocity(outtake_velocity);
 
             posStraight((float) 1.5f,vel,-1,0.85f);
             midtake_2.setPower(0);
@@ -79,7 +81,7 @@ public class AutoLimeLightCRS extends Zkely {
             intake.setPower(intake_dir * 1.0);
             midtake_2.setPower(-1f * midtake_dir * midtake_power);
             midtake.setPower(-0.8f * midtake_dir * midtake_power);
-            outtake.setPower(outtake_dir * outtake_power);
+            startOuttakeVelocity(outtake_velocity);
 
             posStraight((float) 1.4f,vel,-1,0.9f);
             midtake_2.setPower(0);
@@ -89,10 +91,10 @@ public class AutoLimeLightCRS extends Zkely {
         }
         //FINAL SHOOT
         while (limelight_target(true,true) && opModeIsActive()) {
-            update_imu();
+            run_updates();
             telemetry.update();
         }
-        shootAuto(true);
+        shootAutoVelocity();
         posStrafe(1,(int) Math.floor(vel*1.5f),1,0);
     }
 

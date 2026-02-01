@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+
 import java.lang.reflect.Array;
 @TeleOp(name="Zestacular Teleop")
 public class TeleOpMode extends Zkely
@@ -37,14 +39,7 @@ public class TeleOpMode extends Zkely
         }
     };
     public void bumpers() {
-        if (gamepad1.share && !l_bump_1) {
-            outtake_power -= 0.05;
-        }
-        if (gamepad1.options && !r_bump_1) {
-            outtake_power += 0.05;
-        }
-        l_bump_1 = gamepad1.share;
-        r_bump_1 = gamepad1.options;
+
     }
 
     public void do_p1_things() {
@@ -63,9 +58,6 @@ public class TeleOpMode extends Zkely
         if (gamepad1.dpad_up && !dpad_up_1) {
             posSlide(slide_up_pos,500);
         }
-        if (gamepad1.dpad_down && !dpad_down_1) {
-            posSlide(slide_down_pos,100);
-        }
         if (!rightSlide.isBusy() && !leftSlide.isBusy()) {
             brakeSlides();
         }
@@ -75,15 +67,19 @@ public class TeleOpMode extends Zkely
     public void intake_control() {
         intake.setPower(intake_dir * gamepad1.right_trigger);
         if (gamepad1.right_trigger > 0.2) {
-            midtake.setPower(midtake_dir * 1);
+            midtake.setPower(midtake_dir * midtake_power);
+            if (gamepad1.left_trigger < 0.2) {
+                midtake_2.setPower(midtake_dir * -1 * midtake_power);
+            }
         }
         if (gamepad1.left_trigger > 0.2) {
             outtake.setVelocity(outtake_velocity);
+            //outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            //outtake.setPower(0.7);
         } else {
             outtake.setPower(0);
         }
 
-        telemetry.addData("team",team);
     }
 
     public void do_p2_things() {
@@ -103,18 +99,18 @@ public class TeleOpMode extends Zkely
             leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         }
-        update_imu();
-        update_outtake_pidf();
-        update_outtake_velocity();
+        run_updates();
         do_p1_things();
         do_p2_things();
 
         if (gamepad1.b) {
-            midtake.setPower(midtake_dir);
-            midtake_2.setPower(midtake_dir);
+            if (gamepad1.left_trigger < 0.2 || (gamepad1.left_trigger > 0.2 && outtake.getCurrent(CurrentUnit.MILLIAMPS) < 2000)) {
+                midtake.setPower(midtake_dir * midtake_power);
+                midtake_2.setPower(midtake_dir * midtake_power);
+            }
         } else if (gamepad1.a) {
-            midtake.setPower(-1*midtake_dir);
-            midtake_2.setPower(-1*midtake_dir);
+            midtake.setPower(-1*midtake_dir * midtake_power);
+            midtake_2.setPower(-1*midtake_dir * midtake_power);
         } else {
             midtake.setPower(0);
             midtake_2.setPower(0);
@@ -126,17 +122,20 @@ public class TeleOpMode extends Zkely
             innertake.setPosition(innertake_down_pos);
         }
         innertake.setPosition(innertake.getPosition());
-        if (gamepad1.start) {
-            team = "R";
-        }
-        if (gamepad1.back) {
-            team = "B";
-        }
+
         telemetry.addData("outtake vel",outtake.getVelocity());
         telemetry.addData("outtake target vel",outtake_velocity);
         telemetry.addData("distance",apriltag_distance);
+        telemetry.addData("outtake current",outtake.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("front right current",rightFront.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("front left current",leftFront.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("back right current",rightRear.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("back left current",leftRear.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("intake current",intake.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("left slide current",leftSlide.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("right slide current",rightSlide.getCurrent(CurrentUnit.MILLIAMPS));
         telemetry.update();
-
+        limit_power();
     }
 }
 
