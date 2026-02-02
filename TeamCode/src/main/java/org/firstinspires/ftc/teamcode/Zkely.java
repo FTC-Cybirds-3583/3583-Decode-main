@@ -59,7 +59,7 @@ public abstract class Zkely extends LinearOpMode
     int last_tag;
     int current_tag;
     int tolerance = 3;
-    int rfDefDir = -1;
+    int rfDefDir = 1;
     int lfDefDir = -1;
     int rbDefDir = 1;
     int lbDefDir = -1;
@@ -175,9 +175,6 @@ public abstract class Zkely extends LinearOpMode
         rightSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         brakeSlides();
-
-        rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
-
 
         //initialise limelight on pipeline 0
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
