@@ -47,7 +47,7 @@ public class TeleOpMode extends Zkely
         intake_control();
         bumpers();
         boolean button = gamepad1.right_bumper;
-        if (!limelight_teleop_circle(button)) {
+        if (limelight_teleop_circle(button) == 0) {
             float rx = gamepad1.right_stick_x;
             if (button) { rx = 0;}
             power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,rx,gamepad1.right_stick_y,speed);
@@ -126,14 +126,6 @@ public class TeleOpMode extends Zkely
         telemetry.addData("outtake vel",outtake.getVelocity());
         telemetry.addData("outtake target vel",outtake_velocity);
         telemetry.addData("distance",apriltag_distance);
-        telemetry.addData("outtake current",outtake.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("front right current",rightFront.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("front left current",leftFront.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("back right current",rightRear.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("back left current",leftRear.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("intake current",intake.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("left slide current",leftSlide.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("right slide current",rightSlide.getCurrent(CurrentUnit.MILLIAMPS));
         telemetry.update();
         limit_power();
     }

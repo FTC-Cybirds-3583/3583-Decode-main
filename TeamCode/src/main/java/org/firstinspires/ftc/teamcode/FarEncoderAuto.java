@@ -1,11 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
-@Autonomous( name = "Far")
+@Disabled
+@Autonomous( name = "Far-Encoder")
 
-public class FarAuto extends MainAuto {
+public class FarEncoderAuto extends MainEncoderAuto {
     @Override
 
     public void runOpMode() {

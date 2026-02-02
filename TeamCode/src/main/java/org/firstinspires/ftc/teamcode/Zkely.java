@@ -2,6 +2,9 @@ package org.firstinspires.ftc.teamcode;
 
 import static java.lang.Thread.sleep;
 
+import com.pedropathing.ftc.FTCCoordinates;
+import com.pedropathing.geometry.PedroCoordinates;
+import com.pedropathing.geometry.Pose;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -60,9 +63,9 @@ public abstract class Zkely extends LinearOpMode
     int current_tag;
     int tolerance = 3;
     int rfDefDir = 1;
-    int lfDefDir = -1;
+    int lfDefDir = 1;
     int rbDefDir = 1;
-    int lbDefDir = -1;
+    int lbDefDir = 1;
     int posDriveWait= 1300;
 
     // Now use these simple methods to extract each angle
@@ -145,9 +148,9 @@ public abstract class Zkely extends LinearOpMode
         leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        leftRear.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
-        leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         rightRear.setDirection(DcMotorSimple.Direction.FORWARD);
 
         leftRear.setVelocity(0);
@@ -449,21 +452,18 @@ public abstract class Zkely extends LinearOpMode
         }
         return true;
     }
-    public boolean limelight_teleop_circle(boolean go) {
-        if (!limelight.getLatestResult().isValid() || !go) { return false; };
-        if (current_tag != 20 && current_tag != 24) { return false; };
+    public float limelight_teleop_circle(boolean go) {
+        if (!limelight.getLatestResult().isValid() || !go) { return 0; };
+        if (current_tag != 20 && current_tag != 24) { return 0; };
         float tx_stick = Math.signum(correction_angle);
 
-        tx_stick *= Math.abs(map(0.02f, 1, 0, 35, Math.abs(correction_angle)));
-        if (Math.abs(tx_stick) < 0.06f) {
+        tx_stick *= Math.abs(map(0.05f, 1, 0, 35, Math.abs(correction_angle)));
+        if (Math.abs(tx_stick) < 0.12f) {
             tx_stick = 0;
         }
         power_dual_joy_control(gamepad1.left_stick_x, gamepad1.left_stick_y, tx_stick, gamepad1.right_stick_y, speed);
 
-        if (tx_stick == 0) {
-            return false;
-        }
-        return true;
+        return Math.abs(tx_stick);
     }
     public boolean new_limelight_target() {
         run_updates();
@@ -811,6 +811,15 @@ public abstract class Zkely extends LinearOpMode
         }
         return result;
 
+    }
+
+    public Pose botPoseToPedroPose(Pose3D bp) {
+        //AP     PE
+        //X+     Y-
+
+        double mtoin = 39.3701;
+        Pose newPose = new Pose(bp.getPosition().x*mtoin,bp.getPosition().y*mtoin,Math.toRadians(bp.getOrientation().getYaw()), FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+        return newPose;
     }
 }
 

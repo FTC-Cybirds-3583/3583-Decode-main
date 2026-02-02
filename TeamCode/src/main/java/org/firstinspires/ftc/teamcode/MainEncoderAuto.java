@@ -2,13 +2,12 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Disabled
-@Autonomous( name = "MainAuto")
+@Autonomous( name = "MainEncoderAuto")
 
-public class MainAuto extends Zkely {
+public class MainEncoderAuto extends Zkely {
     private ElapsedTime runtime = new ElapsedTime();
     int vel;
     float mod_amount = 10;
@@ -26,7 +25,7 @@ public class MainAuto extends Zkely {
         ElapsedTime time_since_start = new ElapsedTime();
 
         start_outtake_velocity_auto();
-        while (limelight_teleop_circle(true) && opModeIsActive() && time_since_start.milliseconds() < 2500) {
+        while (limelight_teleop_circle(true) > 0.1 && opModeIsActive() && time_since_start.milliseconds() < 2500) {
             run_updates();
             telemetry.addData("correct angle",correction_angle);
             telemetry.update();

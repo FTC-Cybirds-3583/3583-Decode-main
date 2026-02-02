@@ -1,11 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
+@Disabled
+@Autonomous( name = "Close-Encoder-Obelisk")
 
-@Autonomous( name = "Close-Obelisk")
-
-public class CloseAutoObelisk extends MainAuto {
+public class CloseEncoderAutoObelisk extends MainEncoderAuto {
     private ElapsedTime runtime = new ElapsedTime();
     int vel;
     float mod_amount = 10;
