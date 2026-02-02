@@ -16,10 +16,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous( name = "MainPedroAuto")
+@Autonomous( name = "Blue Pedro")
 //new Pose (0,0,0);//  new Pose (0,20,0);// // STRAFE TESTING POSES
 
-public class MainPedroAuto extends Zkely {
+public class BluePedroAuto extends Zkely {
     private ElapsedTime runtime = new ElapsedTime();
 
     int last_tag = 23;
@@ -28,11 +28,12 @@ public class MainPedroAuto extends Zkely {
     Pose intakePose23 = new Pose(44,84,Math.toRadians(180));
     Pose intakeDonePose23 = new Pose(16,84,Math.toRadians(180));
     Pose intakePose22 = new Pose(42,60,Math.toRadians(180));
-    Pose intakeDonePose22 = new Pose(12,60,Math.toRadians(180));
+    Pose intakeDonePose22 = new Pose(10.5,60,Math.toRadians(180));
+    Pose leavePose = new Pose(36,84,Math.toRadians(130));
     Follower follower;
     int pathState = 0;
     Timer pathTimer, actionTimer, opmodeTimer;
-    PathChain moveBack,moveIntake23,moveDoneIntake23,moveToGoal23,moveIntake22,moveDoneIntake22,moveToGoal22;
+    PathChain moveBack,moveIntake23,moveDoneIntake23,moveToGoal23,moveIntake22,moveDoneIntake22,moveToGoal22,leave;
     boolean updateFollower = true;
 
     public void farAuto() {
@@ -62,11 +63,14 @@ public class MainPedroAuto extends Zkely {
         moveDoneIntake22 = follower.pathBuilder()
                 .addPath(new BezierLine(intakePose22,intakeDonePose22))
                 .setLinearHeadingInterpolation(intakePose22.getHeading(),intakeDonePose22.getHeading())
-
                 .build();
         moveToGoal22 = follower.pathBuilder()
                 .addPath(new BezierLine(intakeDonePose22,aimingPose))
                 .setLinearHeadingInterpolation(intakeDonePose22.getHeading(),aimingPose.getHeading())
+                .build();
+        leave = follower.pathBuilder()
+                .addPath(new BezierLine(aimingPose,leavePose))
+                .setLinearHeadingInterpolation(aimingPose.getHeading(),leavePose.getHeading())
                 .build();
     }
 
@@ -111,33 +115,49 @@ public class MainPedroAuto extends Zkely {
                 break;
             case 4:
                 if (follower.isBusy()) { break; }
+
+                pedroShoot();
+
+                setPathState(5);
+                break;
+            case 5:
+                if (follower.isBusy()) { break; }
                 startIntake();
                 follower.followPath(moveIntake22);
-                while (pathTimer.getElapsedTime() < 4000) {
+                while (pathTimer.getElapsedTime() < 3000) {
                     follower.update();
                 }
 
                 follower.followPath(moveDoneIntake22,0.5,true);
-                setPathState(5);
+                setPathState(6);
                 break;
-            case 5:
+            case 6:
                 if (follower.isBusy()) { break; }
 
                 stopIntake();
                 intake.setPower(intake_dir);
 
                 follower.followPath(moveToGoal22);
-                while (pathTimer.getElapsedTime() < 4000) {
+                while (pathTimer.getElapsedTime() < 3000) {
                     follower.update();
                 }
-                setPathState(6);
+                setPathState(7);
                 break;
-            case 6:
+            case 7:
                 if (follower.isBusy()) { break; }
 
                 pedroShoot();
 
-                setPathState(7);
+                setPathState(8);
+                break;
+            case 8:
+                if (follower.isBusy()) { break; }
+
+                follower.followPath(leave);
+                while (pathTimer.getElapsedTime() < 2000 && opModeIsActive()) {
+                    follower.update();
+                }
+                setPathState(9);
                 break;
         }
     }
