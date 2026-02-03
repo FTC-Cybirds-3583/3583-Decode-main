@@ -218,6 +218,7 @@ public abstract class Zkely extends LinearOpMode
     public void power_dual_joy_control(float left_stick_x,float left_stick_y,float right_stick_x,float right_stick_y,double s) {
         //don't ask how this works, it is wonderful
         set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        set_motor_zero_power_behaviour(DcMotor.ZeroPowerBehavior.BRAKE);
 
         if (Math.abs(right_stick_x) > 0.5) {
             s = 1;
@@ -408,11 +409,6 @@ public abstract class Zkely extends LinearOpMode
             }
         }
         sleepMS(150);
-        /*set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setPower(0);
-        leftFront.setPower(0);
-        rightRear.setPower(0);
-        leftRear.setPower(0);*/
     }
     public void posSlide(int position, int velocity) {
         rightSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -470,6 +466,7 @@ public abstract class Zkely extends LinearOpMode
         if (current_tag != 20 && current_tag != 24) { return true; };
 
         set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        set_motor_zero_power_behaviour(DcMotor.ZeroPowerBehavior.BRAKE);
         float ty_target = 6f;
         float tx_target = 0;
         float tag_yaw = 130;
@@ -498,6 +495,7 @@ public abstract class Zkely extends LinearOpMode
     public boolean limelight_target(boolean go,boolean close) {
         //STARTING YAW USES RACING AWAY FROM RED GOAL = 0, SO AUTOBR USES 180
         set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        set_motor_zero_power_behaviour(DcMotor.ZeroPowerBehavior.BRAKE);
         LLResult result = limelight.getLatestResult();
         float lx = 0;
         float ly = 0;
@@ -626,17 +624,18 @@ public abstract class Zkely extends LinearOpMode
         leftRear.setMode(mode);
         rightFront.setMode(mode);
         leftFront.setMode(mode);
-        if (mode == DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
-            rightRear.setPower(0);
-            leftRear.setPower(0);
-            rightFront.setPower(0);
-            leftFront.setPower(0);
-
-            rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        }
+    }
+    public void set_motor_powers(double power) {
+        rightRear.setPower(power);
+        leftRear.setPower(power);
+        rightFront.setPower(power);
+        leftFront.setPower(power);
+    }
+    public void set_motor_zero_power_behaviour(DcMotor.ZeroPowerBehavior behaviour) {
+        rightRear.setZeroPowerBehavior(behaviour);
+        leftRear.setZeroPowerBehavior(behaviour);
+        rightFront.setZeroPowerBehavior(behaviour);
+        leftFront.setZeroPowerBehavior(behaviour);
     }
 
     public float angle_distance(float angle,float target) {
@@ -770,6 +769,9 @@ public abstract class Zkely extends LinearOpMode
             }
         }
         set_motor_modes(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        set_motor_zero_power_behaviour(DcMotor.ZeroPowerBehavior.BRAKE);
+        set_motor_powers(0);
+
     }
     public void limelight_read_auto() {
         while (limelight_read() && opModeIsActive()) {
