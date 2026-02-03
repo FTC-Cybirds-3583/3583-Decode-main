@@ -10,17 +10,17 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Disabled
+//@Disabled
 @TeleOp
 public class ZZPIDshooterTuning extends OpMode
 {
     public DcMotorEx shooter;
-    public double high = 1800; //P=7.6 F=15.2
+    public double high = 1500; //P=7.6 F=15.2
     // 2000;P= 7.3 F = 15.1
-    public double med = 1500; //P = 9.92 F = 15.19
+    public double med = 1200; //P = 9.92 F = 15.19
     public double low = 600;
     double targetVelocity = med;
-    double P = 275;
+    double P = 200;
     double F = 12.86;
     double[] step_sizes = {10.0, 1.0, 0.1, 0.01};
     int step_index = 1;

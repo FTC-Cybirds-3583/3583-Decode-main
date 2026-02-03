@@ -742,9 +742,9 @@ public abstract class Zkely extends LinearOpMode
     }
 
     public void update_outtake_pidf() {
-        float P = 275; //275
+        float P = 220; //275
         if (apriltag_distance > 140) {
-            P = 300;
+            P = 275;
         }
         telemetry.addData("P",P);
 
