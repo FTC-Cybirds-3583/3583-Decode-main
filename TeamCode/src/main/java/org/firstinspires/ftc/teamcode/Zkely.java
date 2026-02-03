@@ -815,13 +815,5 @@ public abstract class Zkely extends LinearOpMode
 
     }
 
-    public Pose botPoseToPedroPose(Pose3D bp) {
-        //AP     PE
-        //X+     Y-
-
-        double mtoin = 39.3701;
-        Pose newPose = new Pose(bp.getPosition().x*mtoin,bp.getPosition().y*mtoin,Math.toRadians(bp.getOrientation().getYaw()), FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
-        return newPose;
-    }
 }
 
