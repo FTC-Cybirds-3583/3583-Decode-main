@@ -25,7 +25,7 @@ public class MainEncoderAuto extends Zkely {
         ElapsedTime time_since_start = new ElapsedTime();
 
         start_outtake_velocity_auto();
-        while (limelight_teleop_circle(true) > 0.1 && opModeIsActive() && time_since_start.milliseconds() < 2500) {
+        while (limelight_teleop_circle(true,0.1f) > 0.1 && opModeIsActive() && time_since_start.milliseconds() < 2500) {
             run_updates();
             telemetry.addData("correct angle", correction_angle);
             telemetry.update();

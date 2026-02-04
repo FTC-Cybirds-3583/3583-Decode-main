@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-//@Disabled
+@Disabled
 @TeleOp
 public class ZZPIDshooterTuning extends OpMode
 {

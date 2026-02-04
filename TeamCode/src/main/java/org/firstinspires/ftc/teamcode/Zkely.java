@@ -53,6 +53,8 @@ public abstract class Zkely extends LinearOpMode
 
     PIDFCoefficients PosDriveCo = new PIDFCoefficients(10,0,0,10);
     float midtake_power = 1f;
+    int manual_velocity = 1300;
+    boolean manual = false;
     double innertake_up_pos = 0;
     double innertake_down_pos = 0.525;
     Pose3D last_botpose;
@@ -97,7 +99,7 @@ public abstract class Zkely extends LinearOpMode
     float correction_angle = 0;
     float apriltag_distance = 0;
     float target_distance = 0;
-    int outtake_velocity = 1000;
+    int outtake_velocity = 1200;
     boolean latest_result_valid = false;
     PIDFCoefficients outtake_pidf = new PIDFCoefficients(280,0,0,15);
     LLResultTypes.FiducialResult latest_fiducial;
@@ -259,7 +261,7 @@ public abstract class Zkely extends LinearOpMode
     }
     public void startShootingVelocity(float velocity) {
         telemetry.addData("start shoot vel",outtake_velocity);
-        innertake.setPosition(innertake_down_pos);
+        //innertake.setPosition(innertake_down_pos);
         midtake.setPower(midtake_dir * -1 * midtake_power);
         sleepMS(300);
         intake.setPower(intake_dir * 1);
@@ -448,14 +450,15 @@ public abstract class Zkely extends LinearOpMode
         }
         return true;
     }
-    public float limelight_teleop_circle(boolean go) {
-        if (!limelight.getLatestResult().isValid() || !go) { return 0; };
-        if (current_tag != 20 && current_tag != 24) { return 0; };
+    public float limelight_teleop_circle(boolean go,float tolerance) {
+        if (!limelight.getLatestResult().isValid() || !go) { return -1; };
+        if (latest_fiducial.getFiducialId() != 20 && latest_fiducial.getFiducialId() != 24) { return -2; };
         float tx_stick = Math.signum(correction_angle);
 
-        tx_stick *= Math.abs(map(0.05f, 1, 0, 35, Math.abs(correction_angle)));
-        if (Math.abs(tx_stick) < 0.12f) {
+        tx_stick *= Math.abs(map(0f, 1, 0, 35, Math.abs(correction_angle)));
+        if (Math.abs(tx_stick) < tolerance) {
             tx_stick = 0;
+            set_motor_powers(0);
         }
         power_dual_joy_control(gamepad1.left_stick_x, gamepad1.left_stick_y, tx_stick, gamepad1.right_stick_y, speed);
 
@@ -664,7 +667,7 @@ public abstract class Zkely extends LinearOpMode
         float distance = apriltag_distance;
         float tx_rad = (float) Math.toRadians(current_tx);
         float yaw_rad = (float) Math.toRadians(target_yaw);
-        float tag_to_goal_in = 8;
+        float tag_to_goal_in = 15;
         float x1 = (float) distance * (float) Math.sin(tx_rad);
         float y1 = (float) distance * (float) Math.cos(tx_rad);
         float x2 = tag_to_goal_in*(float) Math.sin(yaw_rad) + x1;
@@ -697,7 +700,7 @@ public abstract class Zkely extends LinearOpMode
         apriltag_distance = apriltag_distance();
 
         midtake_power = (float) (1.135f - 0.0019f * apriltag_distance);
-        if (voltageSensor.getVoltage() < 12.9f) { midtake_power += (float) ((13-voltageSensor.getVoltage()) * 0.065); }
+        if (voltageSensor.getVoltage() < 12.9f) { midtake_power += (float) ((13-voltageSensor.getVoltage()) * 0.055); }
         if (midtake_power > 1) { midtake_power = 1; }
 
         if (true_yaw > 180) {
@@ -730,27 +733,30 @@ public abstract class Zkely extends LinearOpMode
         //DISTANCE : VELOCITY
         //82 : 1225
         //200 : 1525
-
+        if (manual) {
+            outtake_velocity = manual_velocity;
+            return;
+        }
         if (!latest_result_valid) {
             return;
         }
 
-        float a = 2.645f;
-        float b = 1025f;
-        outtake_velocity = (int) (a * apriltag_distance + b);
+        double a = 4;
+        double b = 925;
+        outtake_velocity = (int) (a * target_distance + b );
 
     }
 
     public void update_outtake_pidf() {
-        float P = 220; //275
-        if (apriltag_distance > 140) {
-            P = 275;
-        }
+        float P = 275; //275
+        //if (apriltag_distance > 140) {
+        //    P = 275;
+        //}
         telemetry.addData("P",P);
 
         float F =  (float) (-449.47321*Math.pow(outtake_velocity,-0.619854f)+48.96472-(2.35*currentVoltage));
         telemetry.addData("F",F);
-        PIDFCoefficients pidfCoef = new PIDFCoefficients(P, 0.0 ,0.0,F);
+        PIDFCoefficients pidfCoef = new PIDFCoefficients(P, 0.0 ,0.005,F);
         outtake_pidf = pidfCoef;
         outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         outtake.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoef);

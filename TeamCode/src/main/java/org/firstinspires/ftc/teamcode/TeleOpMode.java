@@ -47,10 +47,13 @@ public class TeleOpMode extends Zkely
         intake_control();
         bumpers();
         boolean button = gamepad1.right_bumper;
-        if (limelight_teleop_circle(button) == 0) {
+        if (limelight_teleop_circle(button,0.1f) < 0.1) {
             float rx = gamepad1.right_stick_x;
             if (button) { rx = 0;}
             power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,rx,gamepad1.right_stick_y,speed);
+        }
+        if (gamepad1.leftBumperWasPressed()) {
+            manual = !manual;
         }
 
     }
@@ -87,17 +90,14 @@ public class TeleOpMode extends Zkely
     }
 
     public void teleLoop() {
-        if (gamepad1.dpad_left) {
-            rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        }else {
-            rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
+        if (manual) {
+            telemetry.addData("MANUAL SHOOT VELOCITY IS ACTIVE.","");
+            if (gamepad1.optionsWasPressed()) {
+                manual_velocity += 50;
+            }
+            if (gamepad1.shareWasPressed()) {
+                manual_velocity -= 50;
+            }
         }
         run_updates();
         do_p1_things();
@@ -126,8 +126,9 @@ public class TeleOpMode extends Zkely
         telemetry.addData("outtake vel",outtake.getVelocity());
         telemetry.addData("outtake target vel",outtake_velocity);
         telemetry.addData("distance",apriltag_distance);
+        telemetry.addData("target distance",target_distance);
         telemetry.update();
-        limit_power();
+        //limit_power();
     }
 }
 

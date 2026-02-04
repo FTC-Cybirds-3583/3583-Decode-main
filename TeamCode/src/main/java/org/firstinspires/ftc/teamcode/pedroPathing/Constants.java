@@ -26,7 +26,8 @@ public class Constants {
             .lateralZeroPowerAcceleration(-67.67113148829944)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.08,0,0.0035,0.05))
             .headingPIDFCoefficients(new PIDFCoefficients(1.1,0,0.002,0.025))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.06,0,0.0035,0.6,0.05))
+            //was p 0.06 f 0.05 before, if it overshoots change back or tune d.
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.1,0,0.0035,0.6,0.05))
             .centripetalScaling(0.0004)
             .mass(13.4263);
 
@@ -71,6 +72,7 @@ public class Constants {
             ));
 
 
+    //braking strength 0.75 worked great! Increased a bit for fun, we'll see.
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 0.75, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
