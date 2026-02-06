@@ -30,15 +30,19 @@ public class MainPedroAuto extends Zkely {
     //144
     Pose aimingPose = new Pose(48,96,Math.toRadians(144));
     Pose intakePose23 = new Pose(47,84,Math.toRadians(175));
-    Pose intakeDonePose23 = new Pose(19,84,Math.toRadians(180));
+    Pose intakeDonePose23 = new Pose(20,84,Math.toRadians(180));
     Pose intakePose22 = new Pose(47,62,Math.toRadians(185));
-    Pose intakeDonePose22 = new Pose(12,58,Math.toRadians(180));
-    Pose intakePose21 = new Pose(47,36,Math.toRadians(180));
-    Pose intakeDonePose21 = new Pose(12,36,Math.toRadians(180));
+    Pose intakeDonePose22 = new Pose(15,58,Math.toRadians(180));
     Pose leavePose = new Pose(36,84,Math.toRadians(144));
     Pose gatePose = new Pose(11, 60, Math.toRadians(150));
     Pose preGatePose = new Pose(22, 60, Math.toRadians(180));
-    Pose telePreGatePose = new Pose(25, 72, Math.toRadians(180));
+    Pose telePreGatePose = new Pose(30, 72, Math.toRadians(180));
+
+    Pose farStartingPose = new Pose(57,9,Math.toRadians(90));
+    Pose farAimingPose = new Pose(60,18,Math.toRadians(115.5));
+    Pose farLeavePose = new Pose(36,10,Math.toRadians(90));
+    Pose intakePose21 = new Pose(47,34,Math.toRadians(185));
+    Pose intakeDonePose21 = new Pose(15,36,Math.toRadians(180));
     //REMEMBER TO ADD REVERSE CLAUSE FOR NEW POSES
     Follower follower;
     int pathState = 0;
@@ -49,9 +53,14 @@ public class MainPedroAuto extends Zkely {
             moveIntake21,moveDoneIntake21,moveToGoal21,
             moveToPreGate,moveToTelePreGate,moveToGate,moveToGoalGate,
             leave;
+    PathChain farMoveForwards,
+    farMoveIntake21, farMoveDoneIntake21, farMoveAim21,
+    farLeave;
     boolean updateFollower = true;
     boolean red_team = false;
+    boolean close_auto = true;
     int close_velocity = 1175;
+    int far_velocity = 1545;
     public Pose reversePose(Pose pose) {
         return new Pose(144-pose.getX(),pose.getY(),Math.toRadians(180) - pose.getHeading());
     }
@@ -70,6 +79,35 @@ public class MainPedroAuto extends Zkely {
         gatePose = reversePose(gatePose);
         preGatePose = reversePose(preGatePose);
         telePreGatePose = reversePose(telePreGatePose);
+
+        farStartingPose = reversePose(farStartingPose);
+        farAimingPose = reversePose(farAimingPose);
+        farLeavePose = reversePose(farLeavePose);
+    }
+
+    public void buildFarPaths() {
+        farMoveForwards = follower.pathBuilder()
+                .addPath(new BezierLine(farStartingPose,farAimingPose))
+                .setLinearHeadingInterpolation(farStartingPose.getHeading(),farAimingPose.getHeading())
+                .build();
+        farMoveIntake21 = follower.pathBuilder()
+                .addPath(new BezierLine(farAimingPose,intakePose21))
+                .setLinearHeadingInterpolation(farAimingPose.getHeading(),intakePose21.getHeading())
+                .setBrakingStrength(0.85)
+                .build();
+        farMoveDoneIntake21 = follower.pathBuilder()
+                .addPath(new BezierLine(intakePose21,intakeDonePose21))
+                .setLinearHeadingInterpolation(intakePose21.getHeading(),intakeDonePose21.getHeading())
+                .build();
+        farMoveAim21 = follower.pathBuilder()
+                .addPath(new BezierCurve(intakeDonePose21,intakePose21,farAimingPose))
+                .setLinearHeadingInterpolation(intakeDonePose21.getHeading(),farAimingPose.getHeading())
+                .build();
+        farLeave = follower.pathBuilder()
+                .addPath(new BezierLine(farAimingPose,farLeavePose))
+                .setLinearHeadingInterpolation(farAimingPose.getHeading(),farLeavePose.getHeading())
+                .build();
+
     }
     public void buildClosePaths() {
         moveBack = follower.pathBuilder()
@@ -142,12 +180,69 @@ public class MainPedroAuto extends Zkely {
                 .build();
     }
 
+    public void farAutoLoop() {
+        switch (pathState) {
+            case 0:
+                startOuttakeVelocity(far_velocity);
+                intake.setPower(intake_dir);
+                follower.followPath(farMoveForwards);
+                setPathState(pathState + 1);
+                break;
+            case 1:
+                if (follower.isBusy()) {
+                    break;
+                }
+
+                pedroShootLoop();
+
+                break;
+            case 2:
+                if (follower.isBusy()) { break; }
+
+                innertake.setPosition(innertake_up_pos);
+                follower.followPath(farMoveIntake21,0.7,false);
+
+                setPathState(pathState+1);
+                break;
+            case 3:
+                if (follower.isBusy()) { break; }
+                startIntake();
+
+                follower.followPath(farMoveDoneIntake21,0.5,false);
+                setPathState(pathState+1);
+                break;
+            case 4:
+                if (follower.isBusy()) { break; }
+
+                sleepMS(500);
+                stopIntake();
+                intake.setPower(intake_dir);
+                startOuttakeVelocity(far_velocity);
+                follower.followPath(farMoveAim21,0.7,false);
+                setPathState(pathState+1);
+                break;
+            case 5:
+                if (follower.isBusy()) { break; }
+
+                pedroShootLoop();
+
+                break;
+            case 6:
+                if (follower.isBusy()) { break; }
+
+                follower.followPath(farLeave,1,true);
+
+                setPathState(pathState+1);
+                break;
+        }
+    }
+
     public void closeAutoLoop() {
         switch (pathState) {
             case 0:
                 startOuttakeVelocity(close_velocity);
                 intake.setPower(intake_dir);
-                follower.followPath(moveBack,1,false);
+                follower.followPath(moveBack);
                 setPathState(pathState+1);
                 break;
             case 1:
@@ -173,7 +268,6 @@ public class MainPedroAuto extends Zkely {
                 break;
             case 4:
                 if (follower.isBusy()) { break; }
-                
 
                 sleepMS(500);
                 stopIntake();
@@ -248,31 +342,47 @@ public class MainPedroAuto extends Zkely {
 
     public void pedroInit() {
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose);
+        if (close_auto) {
+            follower.setStartingPose(startingPose);
+        } else {
+            follower.setStartingPose(farStartingPose);
+        }
         if (red_team) {
             setRedPoints();
         }
-        buildClosePaths();
+        if (close_auto) {
+            buildClosePaths();
+        } else {
+            buildFarPaths();
+        }
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
     }
 
-    public void run(boolean red) {
+    public void run(boolean red,boolean close) {
         red_team = red;
+        close_auto = close;
         zkely_init();
         pedroInit();
         waitForStart();
 
         opmodeTimer.resetTimer();
         setPathState(0);
-        follower.setPose(startingPose);
-        follower.followPath(moveBack);
+        if (close) {
+            follower.setPose(startingPose);
+        } else {
+            follower.setPose(farStartingPose);
+        }
         while (opModeIsActive()) {
             follower.update();
             run_updates();
             telemetry.addData("path state",pathState);
-            closeAutoLoop();
+            if (close_auto) {
+                closeAutoLoop();
+            } else {
+                farAutoLoop();
+            }
             telemetry.update();
         }
     }
@@ -283,17 +393,29 @@ public class MainPedroAuto extends Zkely {
     }
 
     public void pedroShootLoop() {
-        float return_val = limelight_teleop_circle(true,0.08f);
+        float tolerance = 0.08f;
+        if (!close_auto) {
+            tolerance = 0.05f;
+        }
+        float return_val = limelight_teleop_circle(true,tolerance);
         telemetry.addData("aiming",return_val);
         if (return_val == 0) {
             set_motor_powers(0);
             setPathState(pathState + 1);
-            startOuttakeVelocity(close_velocity);
+            if (close_auto) {
+                startOuttakeVelocity(close_velocity);
+            } else {
+                startOuttakeVelocity(far_velocity);
+            }
             while (!motor_at_velocity(outtake,close_velocity,20)) {
                 follower.update();
             }
             set_motor_powers(0);
-            startShootingVelocity(close_velocity);
+            if (close_auto) {
+                startShootingVelocity(close_velocity);
+            } else {
+                startShootingVelocity(far_velocity);
+            }
             sleep(3000);
             stopShooting();
         }

@@ -47,7 +47,7 @@ public class TeleOpMode extends Zkely
         intake_control();
         bumpers();
         boolean button = gamepad1.right_bumper;
-        if (limelight_teleop_circle(button,0.1f) < 0.1) {
+        if (limelight_teleop_circle(button,0.05f) == 0) {
             float rx = gamepad1.right_stick_x;
             if (button) { rx = 0;}
             power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,rx,gamepad1.right_stick_y,speed);

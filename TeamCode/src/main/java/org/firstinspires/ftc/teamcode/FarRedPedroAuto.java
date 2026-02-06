@@ -1,16 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
-@Autonomous( name = "Blue Pedro")
+@Autonomous( name = "FAR Red Pedro")
 //new Pose (0,0,0);//  new Pose (0,20,0);// // STRAFE TESTING POSES
 
-public class BluePedroAuto extends MainPedroAuto {
+public class FarRedPedroAuto extends MainPedroAuto {
 
     @Override
     public void runOpMode() {
-        run(false,true);
+        run(true,false);
     }
 }
 

@@ -180,7 +180,6 @@ public abstract class Zkely extends LinearOpMode
         rightSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         brakeSlides();
-
         //initialise limelight on pipeline 0
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(100);
@@ -452,10 +451,18 @@ public abstract class Zkely extends LinearOpMode
     }
     public float limelight_teleop_circle(boolean go,float tolerance) {
         if (!limelight.getLatestResult().isValid() || !go) { return -1; };
-        if (latest_fiducial.getFiducialId() != 20 && latest_fiducial.getFiducialId() != 24) { return -2; };
+        if (latest_fiducial != null) {
+            if (latest_fiducial.getFiducialId() != 20 && latest_fiducial.getFiducialId() != 24) {
+                return -2;
+            }
+            ;
+        } else {
+            return -2;
+        }
+
         float tx_stick = Math.signum(correction_angle);
 
-        tx_stick *= Math.abs(map(0f, 1, 0, 35, Math.abs(correction_angle)));
+        tx_stick *= Math.abs(map(-0.025f, 1, 0, 35, Math.abs(correction_angle)));
         if (Math.abs(tx_stick) < tolerance) {
             tx_stick = 0;
             set_motor_powers(0);
@@ -529,7 +536,7 @@ public abstract class Zkely extends LinearOpMode
             double ty_var = 0.25;
             double yaw_var = 1.25;
             double l_speed = 0.4;
-            if (result.isValid()) {
+            if (result.isValid() && latest_fiducial != null) {
                 telemetry.addData("tx",result.getTx());
                 last_tag = result.getFiducialResults().get(0).getFiducialId();
                 Pose3D botpose = result.getBotpose();
@@ -649,7 +656,7 @@ public abstract class Zkely extends LinearOpMode
     }
 
     public float apriltag_distance() {
-        double limelight_angle_deg = 7.675;
+        double limelight_angle_deg = 0;//7.675;
 
         double apriltag_height_in = 29.5f;
         double limelight_height_in = 14.75f;
@@ -741,8 +748,8 @@ public abstract class Zkely extends LinearOpMode
             return;
         }
 
-        double a = 4;
-        double b = 925;
+        double a = 3.15;
+        double b = 960;
         outtake_velocity = (int) (a * target_distance + b );
 
     }
@@ -767,6 +774,7 @@ public abstract class Zkely extends LinearOpMode
         update_outtake_power();
         update_outtake_pidf();
     }
+
     public void new_limelight_target_auto() {
         ElapsedTime time_since_start = new ElapsedTime();
         while (new_limelight_target() && opModeIsActive()) {
