@@ -70,13 +70,11 @@ public abstract class Zkely extends LinearOpMode
     int lbDefDir = 1;
     int posDriveWait= 1300;
 
-    // Now use these simple methods to extract each angle
-// (Java type double) from the object you just created:
     double robot_yaw;
     double robot_pitch;
     double robot_roll;
     Limelight3A limelight;
-    int slide_up_pos = 2100;
+    int slide_up_pos = 2950;
     int slide_down_pos = -5;
     int slide_target_pos = 50;
     double speed;
@@ -261,7 +259,7 @@ public abstract class Zkely extends LinearOpMode
     public void startShootingVelocity(float velocity) {
         telemetry.addData("start shoot vel",outtake_velocity);
         //innertake.setPosition(innertake_down_pos);
-        midtake.setPower(midtake_dir * -1 * midtake_power);
+        midtake.setPower(midtake_dir * -1);
         sleepMS(300);
         intake.setPower(intake_dir * 1);
         midtake.setPower(midtake_dir * midtake_power);
@@ -271,7 +269,7 @@ public abstract class Zkely extends LinearOpMode
     }
     public void startShootingPower(float power) {
         innertake.setPosition(innertake_down_pos);
-        midtake.setPower(midtake_dir * -1 * midtake_power);
+        midtake.setPower(midtake_dir * -1);
         sleepMS(300);
         intake.setPower(intake_dir * 1);
         midtake.setPower(midtake_dir * midtake_power);
@@ -290,7 +288,7 @@ public abstract class Zkely extends LinearOpMode
         innertake.setPosition(innertake_up_pos);
         sleepMS(300);
         intake.setPower(intake_dir * 1);
-        midtake.setPower(midtake_dir * midtake_power);
+        midtake.setPower(midtake_dir);
         midtake_2.setPower(midtake_dir*-1*midtake_power);
     }
     public void stopIntake() {
@@ -460,15 +458,17 @@ public abstract class Zkely extends LinearOpMode
             return -2;
         }
 
-        float tx_stick = Math.signum(correction_angle);
+        float tx_stick = 1;
 
-        tx_stick *= Math.abs(map(-0.025f, 1, 0, 35, Math.abs(correction_angle)));
-        if (Math.abs(tx_stick) < tolerance) {
+        tx_stick *= Math.abs(map(0f, 1, 0, 40, Math.abs(correction_angle)));
+        if ((tx_stick) < 0.1) {
             tx_stick = 0;
+            set_motor_zero_power_behaviour(DcMotor.ZeroPowerBehavior.BRAKE);
             set_motor_powers(0);
         }
+        tx_stick *= Math.signum(correction_angle);
         power_dual_joy_control(gamepad1.left_stick_x, gamepad1.left_stick_y, tx_stick, gamepad1.right_stick_y, speed);
-
+        telemetry.addData("tx stick",tx_stick);
         return Math.abs(tx_stick);
     }
     public boolean new_limelight_target() {
@@ -674,7 +674,7 @@ public abstract class Zkely extends LinearOpMode
         float distance = apriltag_distance;
         float tx_rad = (float) Math.toRadians(current_tx);
         float yaw_rad = (float) Math.toRadians(target_yaw);
-        float tag_to_goal_in = 15;
+        float tag_to_goal_in = 9.5f;
         float x1 = (float) distance * (float) Math.sin(tx_rad);
         float y1 = (float) distance * (float) Math.cos(tx_rad);
         float x2 = tag_to_goal_in*(float) Math.sin(yaw_rad) + x1;
@@ -708,7 +708,8 @@ public abstract class Zkely extends LinearOpMode
 
         midtake_power = (float) (1.135f - 0.0019f * apriltag_distance);
         if (voltageSensor.getVoltage() < 12.9f) { midtake_power += (float) ((13-voltageSensor.getVoltage()) * 0.055); }
-        if (midtake_power > 1) { midtake_power = 1; }
+        if (midtake_power > 1 || manual) { midtake_power = 1; }
+
 
         if (true_yaw > 180) {
             true_yaw = true_yaw - 360;
@@ -749,7 +750,7 @@ public abstract class Zkely extends LinearOpMode
         }
 
         double a = 3.15;
-        double b = 960;
+        double b = 985;
         outtake_velocity = (int) (a * target_distance + b );
 
     }

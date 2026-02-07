@@ -28,7 +28,7 @@ public class MainPedroAuto extends Zkely {
     Pose startingPose = new Pose(17.2722,121.4214,Math.toRadians(234));
     Pose sideAimingPose = new Pose(54,110,Math.toRadians(150));
     //144
-    Pose aimingPose = new Pose(48,96,Math.toRadians(144));
+    Pose aimingPose = new Pose(48,96,Math.toRadians(146));
     Pose intakePose23 = new Pose(47,84,Math.toRadians(175));
     Pose intakeDonePose23 = new Pose(20,84,Math.toRadians(180));
     Pose intakePose22 = new Pose(47,62,Math.toRadians(185));
@@ -39,7 +39,7 @@ public class MainPedroAuto extends Zkely {
     Pose telePreGatePose = new Pose(30, 72, Math.toRadians(180));
 
     Pose farStartingPose = new Pose(57,9,Math.toRadians(90));
-    Pose farAimingPose = new Pose(60,18,Math.toRadians(115.5));
+    Pose farAimingPose = new Pose(60,18,Math.toRadians(114));
     Pose farLeavePose = new Pose(36,10,Math.toRadians(90));
     Pose intakePose21 = new Pose(47,34,Math.toRadians(185));
     Pose intakeDonePose21 = new Pose(15,36,Math.toRadians(180));
@@ -393,7 +393,7 @@ public class MainPedroAuto extends Zkely {
     }
 
     public void pedroShootLoop() {
-        float tolerance = 0.08f;
+        float tolerance = 0.1f;
         if (!close_auto) {
             tolerance = 0.05f;
         }

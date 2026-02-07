@@ -47,7 +47,7 @@ public class TeleOpMode extends Zkely
         intake_control();
         bumpers();
         boolean button = gamepad1.right_bumper;
-        if (limelight_teleop_circle(button,0.05f) == 0) {
+        if (limelight_teleop_circle(button,0.05f) < 0.05f) {
             float rx = gamepad1.right_stick_x;
             if (button) { rx = 0;}
             power_dual_joy_control(gamepad1.left_stick_x,gamepad1.left_stick_y,rx,gamepad1.right_stick_y,speed);
@@ -59,7 +59,7 @@ public class TeleOpMode extends Zkely
     }
     public void slide_control() {
         if (gamepad1.dpad_up && !dpad_up_1) {
-            posSlide(slide_up_pos,500);
+            posSlide(slide_up_pos,600);
         }
         if (!rightSlide.isBusy() && !leftSlide.isBusy()) {
             brakeSlides();
@@ -70,9 +70,9 @@ public class TeleOpMode extends Zkely
     public void intake_control() {
         intake.setPower(intake_dir * gamepad1.right_trigger);
         if (gamepad1.right_trigger > 0.2) {
-            midtake.setPower(midtake_dir * midtake_power);
+            midtake.setPower(midtake_dir);
             if (gamepad1.left_trigger < 0.2) {
-                midtake_2.setPower(midtake_dir * -1 * midtake_power);
+                midtake_2.setPower(midtake_dir * -1);
             }
         }
         if (gamepad1.left_trigger > 0.2) {
@@ -109,8 +109,8 @@ public class TeleOpMode extends Zkely
                 midtake_2.setPower(midtake_dir * midtake_power);
             }
         } else if (gamepad1.a) {
-            midtake.setPower(-1*midtake_dir * midtake_power);
-            midtake_2.setPower(-1*midtake_dir * midtake_power);
+            midtake.setPower(-1*midtake_dir);
+            midtake_2.setPower(-1*midtake_dir);
         } else {
             midtake.setPower(0);
             midtake_2.setPower(0);
@@ -127,6 +127,8 @@ public class TeleOpMode extends Zkely
         telemetry.addData("outtake target vel",outtake_velocity);
         telemetry.addData("distance",apriltag_distance);
         telemetry.addData("target distance",target_distance);
+        telemetry.addData("correction angle",correction_angle);
+        telemetry.addData("gamepad 1 turn",gamepad1.right_stick_x);
         telemetry.update();
         //limit_power();
     }
