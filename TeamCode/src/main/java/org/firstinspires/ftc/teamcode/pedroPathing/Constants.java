@@ -58,17 +58,10 @@ public class Constants {
             .leftEncoderDirection(Encoder.FORWARD)
             .rightEncoderDirection(Encoder.FORWARD)
             .strafeEncoderDirection(Encoder.FORWARD)
-            .IMU_HardwareMapName("imu")
+            .IMU_HardwareMapName("imuE")
             .IMU_Orientation(new RevHubOrientationOnRobot(
-                    new Orientation(
-                            AxesReference.INTRINSIC,
-                            AxesOrder.ZYX,
-                            AngleUnit.DEGREES,
-                            90f,
-                            0f,
-                            0f,
-                            0L
-                    )
+                    RevHubOrientationOnRobot.LogoFacingDirection.DOWN,
+                    RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
             ));
 
 

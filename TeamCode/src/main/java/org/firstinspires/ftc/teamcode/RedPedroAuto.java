@@ -18,7 +18,7 @@ public class RedPedroAuto extends MainPedroAuto {
 
     @Override
     public void runOpMode() {
-        run(true,true);
+        run(true,true,false);
     }
 }
 

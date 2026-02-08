@@ -33,7 +33,8 @@ public class MainPedroAuto extends Zkely {
     Pose intakeDonePose23 = new Pose(20,84,Math.toRadians(180));
     Pose intakePose22 = new Pose(47,62,Math.toRadians(185));
     Pose intakeDonePose22 = new Pose(15,58,Math.toRadians(180));
-    Pose leavePose = new Pose(36,84,Math.toRadians(144));
+    Pose leavePose = new Pose(36,84,Math.toRadians(270));
+    Pose inLeavePose = new Pose(52,16,Math.toRadians(270));
     Pose gatePose = new Pose(11, 60, Math.toRadians(150));
     Pose preGatePose = new Pose(22, 60, Math.toRadians(180));
     Pose telePreGatePose = new Pose(30, 72, Math.toRadians(180));
@@ -43,6 +44,7 @@ public class MainPedroAuto extends Zkely {
     Pose farLeavePose = new Pose(36,10,Math.toRadians(90));
     Pose intakePose21 = new Pose(47,34,Math.toRadians(185));
     Pose intakeDonePose21 = new Pose(15,36,Math.toRadians(180));
+    boolean stopAt23Close = false;
     //REMEMBER TO ADD REVERSE CLAUSE FOR NEW POSES
     Follower follower;
     int pathState = 0;
@@ -52,7 +54,7 @@ public class MainPedroAuto extends Zkely {
             moveIntake22,moveDoneIntake22,moveToGoal22,
             moveIntake21,moveDoneIntake21,moveToGoal21,
             moveToPreGate,moveToTelePreGate,moveToGate,moveToGoalGate,
-            leave;
+            leave, inLeave;
     PathChain farMoveForwards,
     farMoveIntake21, farMoveDoneIntake21, farMoveAim21,
     farLeave;
@@ -76,6 +78,7 @@ public class MainPedroAuto extends Zkely {
         intakePose21 = reversePose(intakePose21);
         intakeDonePose21 = reversePose(intakeDonePose21);
         leavePose = reversePose(leavePose);
+        inLeavePose = reversePose(inLeavePose);
         gatePose = reversePose(gatePose);
         preGatePose = reversePose(preGatePose);
         telePreGatePose = reversePose(telePreGatePose);
@@ -177,6 +180,11 @@ public class MainPedroAuto extends Zkely {
         leave = follower.pathBuilder()
                 .addPath(new BezierLine(aimingPose,leavePose))
                 .setLinearHeadingInterpolation(aimingPose.getHeading(),leavePose.getHeading())
+                .build();
+
+        inLeave = follower.pathBuilder()
+                .addPath(new BezierLine(aimingPose,inLeavePose))
+                .setLinearHeadingInterpolation(aimingPose.getHeading(),inLeavePose.getHeading())
                 .build();
     }
 
@@ -285,6 +293,14 @@ public class MainPedroAuto extends Zkely {
             case 6:
                 innertake.setPosition(innertake_up_pos);
                 if (follower.isBusy()) { break; }
+
+                if (stopAt23Close) {
+                    follower.followPath(inLeave);
+                    while (opModeIsActive()) {
+                        follower.update();
+                    }
+                }
+
                 follower.followPath(moveIntake22);
                 startIntake();
 
@@ -360,7 +376,8 @@ public class MainPedroAuto extends Zkely {
         opmodeTimer.resetTimer();
     }
 
-    public void run(boolean red,boolean close) {
+    public void run(boolean red,boolean close,boolean stop23) {
+        stopAt23Close = stop23;
         red_team = red;
         close_auto = close;
         zkely_init();

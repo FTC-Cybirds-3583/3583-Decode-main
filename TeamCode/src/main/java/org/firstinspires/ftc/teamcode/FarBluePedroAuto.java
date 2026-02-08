@@ -9,7 +9,7 @@ public class FarBluePedroAuto extends MainPedroAuto {
 
     @Override
     public void runOpMode() {
-        run(false,false);
+        run(false,false,false);
     }
 }
 

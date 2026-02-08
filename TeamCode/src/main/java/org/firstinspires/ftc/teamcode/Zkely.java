@@ -46,6 +46,8 @@ public abstract class Zkely extends LinearOpMode
     DcMotorEx outtake;
     IMU.Parameters myIMUparameters;
     IMU imu;
+    IMU.Parameters myIMUEparameters;
+    IMU imuE;
     YawPitchRollAngles robotOrientation;
     CRServo midtake;
     CRServo midtake_2;
@@ -120,6 +122,7 @@ public abstract class Zkely extends LinearOpMode
         intake = hardwareMap.get(DcMotorEx.class,"intake");
         outtake = hardwareMap.get(DcMotorEx.class, "outtake");
         imu = hardwareMap.get(IMU.class, "imu");
+        imuE = hardwareMap.get(IMU.class, "imuE");
 
         midtake = hardwareMap.crservo.get("midtake");
         midtake_2 = hardwareMap.crservo.get("midtake_2");
@@ -191,17 +194,24 @@ public abstract class Zkely extends LinearOpMode
         myIMUparameters = new IMU.Parameters(
                 new RevHubOrientationOnRobot(
                         new Orientation(
-                                    AxesReference.INTRINSIC,
-                                    AxesOrder.ZYX,
-                                    AngleUnit.DEGREES,
-                                    90f,
-                                    0f,
-                                    0f,
-                                    0L
-                                )
+                                AxesReference.INTRINSIC,
+                                AxesOrder.ZYX,
+                                AngleUnit.DEGREES,
+                                90f,
+                                0f,
+                                0f,
+                                0L
+                        )
                 )
         );
         imu.initialize(myIMUparameters);
+        myIMUEparameters = new IMU.Parameters(
+                new RevHubOrientationOnRobot(
+                        RevHubOrientationOnRobot.LogoFacingDirection.DOWN,
+                        RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+                )
+        );
+        imuE.initialize(myIMUEparameters);
 
         outtake.setDirection(DcMotorSimple.Direction.REVERSE);
     }
@@ -685,7 +695,7 @@ public abstract class Zkely extends LinearOpMode
     }
     public void update_imu() {
 
-        robotOrientation = imu.getRobotYawPitchRollAngles();
+        robotOrientation = imuE.getRobotYawPitchRollAngles();
         robot_yaw = robotOrientation.getYaw(AngleUnit.DEGREES);
         robot_pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
         robot_roll = robotOrientation.getRoll(AngleUnit.DEGREES);
@@ -707,7 +717,7 @@ public abstract class Zkely extends LinearOpMode
         apriltag_distance = apriltag_distance();
 
         midtake_power = (float) (1.135f - 0.0019f * apriltag_distance);
-        if (voltageSensor.getVoltage() < 12.9f) { midtake_power += (float) ((13-voltageSensor.getVoltage()) * 0.055); }
+        if (voltageSensor.getVoltage() < 12.9f) { midtake_power += (float) ((13-voltageSensor.getVoltage()) * 0.015); }
         if (midtake_power > 1 || manual) { midtake_power = 1; }
 
 
@@ -723,6 +733,8 @@ public abstract class Zkely extends LinearOpMode
         robot_starting_yaw = (float) (true_yaw-robot_yaw);
         telemetry.addData("midtake power",midtake_power);
         correction_angle = correction_angle();
+        telemetry.addData("imuE angle",imuE.getRobotYawPitchRollAngles().getYaw());
+        telemetry.addData("imu angle",imu.getRobotYawPitchRollAngles().getYaw());
     }
 
     public void update_outtake_power() {
